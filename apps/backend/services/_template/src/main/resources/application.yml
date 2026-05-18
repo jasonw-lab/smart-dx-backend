@@ -1,0 +1,46 @@
+# TODO: Update service name and configuration
+
+spring:
+  application:
+    name: ${SERVICE_NAME:{domain}-be}
+  main:
+    lazy-initialization: true
+  jmx:
+    enabled: false
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:{domain}_db}?useSSL=false&serverTimezone=Asia/Tokyo&characterEncoding=utf-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# Multi-tenant configuration
+smart-be-tenant:
+  enabled: true
+  column: tenant_id
+  default-tenant: default
+  force-default: false  # Set to true for single-tenant operation
+  ignore-tables:
+    - sys_tenant
+    - sys_menu
+    - sys_dict
+    - sys_config
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    root: INFO
+    com.smartdx: DEBUG
