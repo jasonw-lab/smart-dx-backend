@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.smartdx</groupId>
+        <artifactId>smart-dx-backend</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>smart-be-opensearch</artifactId>
+    <name>Smart BE OpenSearch</name>
+    <description>OpenSearch utilities: client bean, retry policy, tenant-aware query builder</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.smartdx</groupId>
+            <artifactId>smart-be-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.smartdx</groupId>
+            <artifactId>smart-be-tenant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
