@@ -1,6 +1,7 @@
 package com.smartdx.redis;
 
 import com.smartdx.tenant.TenantContextHolder;
+import com.smartdx.tenant.TenantProperties;
 
 /**
  * テナント対応 Redis キー生成器
@@ -12,9 +13,11 @@ import com.smartdx.tenant.TenantContextHolder;
 public class TenantRedisKeyGenerator {
 
     private final String serviceName;
+    private final TenantProperties tenantProperties;
 
-    public TenantRedisKeyGenerator(String serviceName) {
+    public TenantRedisKeyGenerator(String serviceName, TenantProperties tenantProperties) {
         this.serviceName = serviceName;
+        this.tenantProperties = tenantProperties;
     }
 
     /**
@@ -26,7 +29,7 @@ public class TenantRedisKeyGenerator {
     public String generate(String businessKey) {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
-            tenantId = 1L; // デフォルトテナント
+            tenantId = getDefaultTenantId();
         }
         return String.format("%s:%d:%s", serviceName, tenantId, businessKey);
     }
@@ -50,8 +53,15 @@ public class TenantRedisKeyGenerator {
     public String getTenantPrefix() {
         Long tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
-            tenantId = 1L;
+            tenantId = getDefaultTenantId();
         }
         return String.format("%s:%d:*", serviceName, tenantId);
+    }
+
+    private Long getDefaultTenantId() {
+        if (tenantProperties != null && tenantProperties.getDefaultTenantId() != null) {
+            return tenantProperties.getDefaultTenantId();
+        }
+        return 1L;
     }
 }

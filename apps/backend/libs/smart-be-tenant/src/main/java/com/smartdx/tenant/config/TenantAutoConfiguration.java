@@ -4,17 +4,23 @@ import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.smartdx.tenant.TenantProperties;
 import com.smartdx.tenant.aspect.TenantAspect;
+import com.smartdx.tenant.filter.TenantContextFilter;
 import com.smartdx.tenant.mybatis.TenantLineHandler;
+import com.smartdx.tenant.resolver.HeaderTenantResolver;
+import com.smartdx.tenant.resolver.TenantResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
+
+import java.util.List;
 
 /**
  * マルチテナント自動設定
@@ -43,15 +49,44 @@ public class TenantAutoConfiguration {
         return new TenantAspect();
     }
 
+    @Bean
+    @ConditionalOnMissingBean
+    public HeaderTenantResolver headerTenantResolver() {
+        return new HeaderTenantResolver();
+    }
+
     /**
-     * MyBatis-Plus インターセプターにテナントハンドラを追加
-     * <p>
-     * 既存の MybatisPlusInterceptor がない場合のみ作成。
-     * 既存がある場合は、アプリ側で TenantLineHandler を追加する必要がある。
-     * </p>
+     * テナントコンテキストフィルター
      */
     @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public FilterRegistrationBean<TenantContextFilter> tenantContextFilter(
+            ObjectProvider<List<TenantResolver>> resolversProvider,
+            TenantProperties tenantProperties) {
+        List<TenantResolver> resolvers = resolversProvider.getIfAvailable(List::of);
+        TenantContextFilter filter = new TenantContextFilter(resolvers, tenantProperties);
+
+        FilterRegistrationBean<TenantContextFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
+        registration.addUrlPatterns("/*");
+        log.info("Registered TenantContextFilter with {} resolvers", resolvers.size());
+        return registration;
+    }
+
+    /**
+     * MyBatis-Plus TenantLineInnerInterceptor を既存の MybatisPlusInterceptor に追加するカスタマイザ
+     */
+    @Bean
+    @ConditionalOnClass(MybatisPlusInterceptor.class)
+    public TenantInterceptorCustomizer tenantInterceptorCustomizer(
+            TenantLineHandler tenantLineHandler,
+            ObjectProvider<MybatisPlusInterceptor> interceptorProvider) {
+        return new TenantInterceptorCustomizer(tenantLineHandler, interceptorProvider);
+    }
+
+    /**
+     * MybatisPlusInterceptor がない場合のデフォルト作成
+     */
+    @Bean
     @ConditionalOnClass(MybatisPlusInterceptor.class)
     @ConditionalOnMissingBean(MybatisPlusInterceptor.class)
     public MybatisPlusInterceptor mybatisPlusInterceptor(TenantLineHandler tenantLineHandler) {

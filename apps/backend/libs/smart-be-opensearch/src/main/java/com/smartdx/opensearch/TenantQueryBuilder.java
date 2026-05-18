@@ -1,6 +1,8 @@
 package com.smartdx.opensearch;
 
 import com.smartdx.tenant.TenantContextHolder;
+import com.smartdx.tenant.TenantProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * テナント対応 OpenSearch クエリビルダー
@@ -8,20 +10,24 @@ import com.smartdx.tenant.TenantContextHolder;
  * 検索クエリに自動的に tenant_id フィルタを追加
  * </p>
  */
+@Component
 public class TenantQueryBuilder {
 
     private static final String TENANT_ID_FIELD = "tenant_id";
+
+    private final TenantProperties tenantProperties;
+
+    public TenantQueryBuilder(TenantProperties tenantProperties) {
+        this.tenantProperties = tenantProperties;
+    }
 
     /**
      * テナントフィルタ条件を生成 (JSON形式)
      *
      * @return テナントフィルタJSON
      */
-    public static String getTenantFilter() {
-        Long tenantId = TenantContextHolder.getTenantId();
-        if (tenantId == null) {
-            tenantId = 1L; // デフォルト
-        }
+    public String getTenantFilter() {
+        Long tenantId = resolveTenantId();
         return String.format("{\"term\":{\"%s\":%d}}", TENANT_ID_FIELD, tenantId);
     }
 
@@ -30,9 +36,8 @@ public class TenantQueryBuilder {
      *
      * @return テナントID
      */
-    public static Long getTenantId() {
-        Long tenantId = TenantContextHolder.getTenantId();
-        return tenantId != null ? tenantId : 1L;
+    public Long getTenantId() {
+        return resolveTenantId();
     }
 
     /**
@@ -40,7 +45,18 @@ public class TenantQueryBuilder {
      *
      * @return true: フィルタ必要, false: 不要 (@IgnoreTenant時)
      */
-    public static boolean requiresTenantFilter() {
+    public boolean requiresTenantFilter() {
         return !TenantContextHolder.isIgnoreTenant();
+    }
+
+    private Long resolveTenantId() {
+        Long tenantId = TenantContextHolder.getTenantId();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        if (tenantProperties != null && tenantProperties.getDefaultTenantId() != null) {
+            return tenantProperties.getDefaultTenantId();
+        }
+        return 1L;
     }
 }
