@@ -1,0 +1,303 @@
+openapi: 3.0.3
+info:
+  title: Property Backend API
+  description: |
+    Smart Property DX - Real Estate Domain Backend Service
+
+    ## マルチテナント
+    全APIでテナント分離が適用されます。テナントIDはJWT claimから自動的に解決されます。
+  version: 1.0.0
+  contact:
+    name: Smart DX Team
+
+servers:
+  - url: http://localhost:8081/api
+    description: Local development
+  - url: https://api.example.com/api/property
+    description: Production
+
+tags:
+  - name: Auth
+    description: 認証・認可
+  - name: Property
+    description: 物件管理
+  - name: Search
+    description: 物件検索
+  - name: System
+    description: システム管理
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: ログイン
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /properties:
+    get:
+      tags:
+        - Property
+      summary: 物件一覧取得
+      operationId: listProperties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pageNum
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: keyword
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyListResponse'
+
+    post:
+      tags:
+        - Property
+      summary: 物件登録
+      operationId: createProperty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyCreateRequest'
+      responses:
+        '200':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyResponse'
+
+  /properties/{id}:
+    get:
+      tags:
+        - Property
+      summary: 物件詳細取得
+      operationId: getProperty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyResponse'
+        '404':
+          description: 物件が見つかりません
+
+  /properties/search/similar:
+    post:
+      tags:
+        - Search
+      summary: 類似物件検索
+      operationId: searchSimilarProperties
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimilarSearchRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyListResponse'
+
+  /actuator/health:
+    get:
+      tags:
+        - System
+      summary: ヘルスチェック
+      operationId: healthCheck
+      responses:
+        '200':
+          description: サービス正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "00000"
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            tokenType:
+              type: string
+              example: Bearer
+            expiresIn:
+              type: integer
+
+    PropertyCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        price:
+          type: number
+        area:
+          type: number
+        description:
+          type: string
+
+    PropertyResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "00000"
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/Property'
+
+    PropertyListResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "00000"
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/Property'
+            total:
+              type: integer
+              format: int64
+
+    Property:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tenantId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        address:
+          type: string
+        price:
+          type: number
+        area:
+          type: number
+        description:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type: string
+          format: date-time
+
+    SimilarSearchRequest:
+      type: object
+      required:
+        - propertyId
+      properties:
+        propertyId:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          default: 10
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
