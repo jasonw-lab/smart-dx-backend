@@ -1,0 +1,186 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-dx-app
+  main:
+    lazy-initialization: true
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # Database (shared smart_dx_db for property/system, retail_db uses separate datasource)
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 30
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+
+  # Cache
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+
+  # Flyway: FlywayAutoConfiguration is excluded in SmartDxApplication.
+  # Each domain has its own FlywayConfig with separate location and history table:
+  # - PropertyFlywayConfig -> flyway_schema_history_property
+  # - SystemFlywayConfig   -> flyway_schema_history_system
+  # - RetailFlywayConfig   -> flyway_schema_history_retail
+  # To disable a domain's migration: smartdx.flyway.{domain}.enabled=false
+
+# MyBatis Plus
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Multi-tenant configuration
+tenant:
+  enabled: true
+  column: tenant_id
+  default-tenant-id: 1
+  force-default: false
+  header-name: X-Tenant-Id
+  ignore-tables:
+    - sys_tenant
+    - sys_config
+    - gen_table
+    - gen_table_column
+    - flyway_schema_history
+    - flyway_schema_history_property
+    - flyway_schema_history_system
+    - flyway_schema_history_retail
+
+# Security (shared JWT secret across all domains)
+security:
+  session:
+    type: jwt
+    access-token-time-to-live: 86400
+    refresh-token-time-to-live: 604800
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:smartdx-shared-secret-key-2024-must-be-at-least-256-bits-long}
+  ignore-urls:
+    - /api/v1/auth/**
+    - /api/auth/login
+    - /api/auth/refresh
+    - /api/captcha/**
+    - /doc.html
+    - /swagger-ui/**
+    - /v3/api-docs/**
+    - /webjars/**
+    - /actuator/**
+    - /actuator/health
+    - /actuator/health/**
+  unsecured-urls:
+    - /api/v1/auth/**
+    - /api/v1/properties/search
+    - /api/v1/properties/*/similar
+    - /actuator/health
+    - /actuator/health/**
+    - /v3/api-docs/**
+    - /swagger-ui/**
+    - /doc.html
+
+# MinIO (property domain)
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:property}
+
+# OpenSearch (property domain)
+opensearch:
+  host: ${OPENSEARCH_HOST:localhost}
+  port: ${OPENSEARCH_PORT:9200}
+  scheme: ${OPENSEARCH_SCHEME:http}
+  username: ${OPENSEARCH_USER:}
+  password: ${OPENSEARCH_PASSWORD:}
+
+# Chatbot (property domain)
+chatbot:
+  llm:
+    enabled: ${CHATBOT_LLM_ENABLED:false}
+    provider: ${CHATBOT_LLM_PROVIDER:mock}
+    api-key: ${CHATBOT_LLM_API_KEY:}
+    api-endpoint: ${CHATBOT_LLM_API_ENDPOINT:}
+    model: ${CHATBOT_LLM_MODEL:gemini-2.5-flash}
+    timeout-ms: ${CHATBOT_LLM_TIMEOUT_MS:3000}
+    daily-limit: ${CHATBOT_LLM_DAILY_LIMIT:100}
+
+# Captcha (system domain)
+captcha:
+  required: ${CAPTCHA_REQUIRED:false}
+  width: 120
+  height: 40
+  code-length: 4
+  expire-seconds: 300
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# OpenAPI (Knife4j)
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan:
+    - com.smartdx.property.controller
+    - com.smartdx.system.controller
+    - com.smartdx.retail.controller
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.smartdx: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{tenantId}] [%X{requestId}] %-5level %logger{36} - %msg%n"

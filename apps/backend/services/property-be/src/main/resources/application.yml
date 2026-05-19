@@ -12,7 +12,7 @@ spring:
   # Database
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/property_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
     type: com.alibaba.druid.pool.DruidDataSource
@@ -49,6 +49,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: '0'
     validate-on-migrate: true
+    table: flyway_schema_history_property
 
 # MyBatis Plus
 mybatis-plus:
@@ -65,23 +66,34 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 # Multi-tenant configuration
-smart-be-tenant:
+tenant:
   enabled: true
   column: tenant_id
   default-tenant-id: 1
   force-default: false
+  header-name: X-Tenant-Id
   ignore-tables:
     - sys_tenant
     - sys_config
     - gen_table
     - gen_table_column
+    - flyway_schema_history_property
+
+# MinIO
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:property}
 
 # Security
 security:
-  jwt:
-    secret: ${JWT_SECRET:smart-dx-property-jwt-secret-key-2024}
-    access-token-expiration: 86400000
-    refresh-token-expiration: 604800000
+  session:
+    type: jwt
+    access-token-time-to-live: 86400
+    refresh-token-time-to-live: 604800
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:smartdx-shared-secret-key-2024-must-be-at-least-256-bits-long}
   ignore-urls:
     - /api/auth/login
     - /api/auth/refresh
@@ -91,6 +103,11 @@ security:
     - /v3/api-docs/**
     - /webjars/**
     - /actuator/**
+    - /actuator/health
+    - /actuator/health/**
+  unsecured-urls:
+    - /api/v1/properties/search
+    - /api/v1/properties/*/similar
     - /actuator/health
     - /actuator/health/**
 
@@ -119,6 +136,17 @@ opensearch:
   scheme: ${OPENSEARCH_SCHEME:http}
   username: ${OPENSEARCH_USER:}
   password: ${OPENSEARCH_PASSWORD:}
+
+# Chatbot
+chatbot:
+  llm:
+    enabled: ${CHATBOT_LLM_ENABLED:false}
+    provider: ${CHATBOT_LLM_PROVIDER:mock}
+    api-key: ${CHATBOT_LLM_API_KEY:}
+    api-endpoint: ${CHATBOT_LLM_API_ENDPOINT:}
+    model: ${CHATBOT_LLM_MODEL:gemini-2.5-flash}
+    timeout-ms: ${CHATBOT_LLM_TIMEOUT_MS:3000}
+    daily-limit: ${CHATBOT_LLM_DAILY_LIMIT:100}
 
 # Logging
 logging:

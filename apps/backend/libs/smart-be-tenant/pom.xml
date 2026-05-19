@@ -45,6 +45,13 @@
             <artifactId>mybatis-plus-jsqlparser</artifactId>
         </dependency>
 
+        <!-- Security (optional, for SecurityUtils reference) -->
+        <dependency>
+            <groupId>com.smartdx</groupId>
+            <artifactId>smart-be-security</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

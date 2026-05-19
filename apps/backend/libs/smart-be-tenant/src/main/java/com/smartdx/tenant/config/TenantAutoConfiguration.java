@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Configuration
 @EnableConfigurationProperties(TenantProperties.class)
-@ConditionalOnProperty(prefix = "smart-be-tenant", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "tenant", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class TenantAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(TenantAutoConfiguration.class);

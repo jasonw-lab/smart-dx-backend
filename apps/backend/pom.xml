@@ -20,9 +20,12 @@
         <module>libs/smart-be-redis</module>
         <module>libs/smart-be-opensearch</module>
         <module>libs/smart-be-observability</module>
-        <!-- Services -->
+        <!-- Services (domain modules) -->
+        <module>services/system-be</module>
         <module>services/property-be</module>
-        <!-- <module>services/retail-be</module> -->
+        <module>services/retail-be</module>
+        <!-- Bootstrap Application -->
+        <module>app</module>
     </modules>
 
     <properties>
