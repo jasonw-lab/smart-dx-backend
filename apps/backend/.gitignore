@@ -1,6 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
-### Example sysUserDetails template template
-### Example sysUserDetails template
 
 # IntelliJ project files
 .idea
@@ -12,8 +10,24 @@ target
 logs
 .history
 
+# Environment files
+.env
+.env.local
+.env.*.local
 
+# Docker
 docker/*/data/
 docker/minio/config
 docker/xxljob/logs
+
+# Review/Agent files
+review/
+.review/
+.agents
+.claude
+p-*.md
+*.bak
+skills-lock.json
+
+# Legacy config
 application-youlai.yml

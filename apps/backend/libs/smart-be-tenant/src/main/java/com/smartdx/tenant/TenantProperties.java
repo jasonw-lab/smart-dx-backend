@@ -1,5 +1,6 @@
 package com.smartdx.tenant;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -7,20 +8,9 @@ import java.util.List;
 
 /**
  * マルチテナント設定プロパティ
- * <p>
- * application.yml での設定例:
- * <pre>
- * smart-be-tenant:
- *   enabled: true
- *   column: tenant_id
- *   default-tenant-id: 1
- *   force-default: false
- *   ignore-tables:
- *     - sys_tenant
- *     - sys_config
- * </pre>
  */
-@ConfigurationProperties(prefix = "smart-be-tenant")
+@Data
+@ConfigurationProperties(prefix = "tenant")
 public class TenantProperties {
 
     /**
@@ -29,63 +19,31 @@ public class TenantProperties {
     private boolean enabled = true;
 
     /**
-     * テナントIDカラム名 (デフォルト: tenant_id)
+     * テナントIDカラム名
      */
     private String column = "tenant_id";
 
     /**
-     * デフォルトテナントID (force-default=true 時、または未認証時に使用)
+     * デフォルトテナントID（forceDefault=true 時に使用）
      */
     private Long defaultTenantId = 1L;
 
     /**
-     * 強制デフォルトモード (true: 全リクエストをdefaultTenantIdで処理)
-     * retail-be のような1テナント固定運用に使用
+     * リクエストヘッダーからテナントIDを取得するヘッダー名
+     */
+    private String headerName = "X-Tenant-Id";
+
+    /**
+     * 強制デフォルトモード
+     * true: 全リクエストで defaultTenantId を使用（retail-be 向け）
+     * false: ヘッダーまたはSecurityContextから取得（property-be 向け）
      */
     private boolean forceDefault = false;
 
     /**
-     * テナントフィルタを無視するテーブル名リスト
+     * テナントフィルタ対象外のテーブル名リスト
      */
     private List<String> ignoreTables = new ArrayList<>();
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getColumn() {
-        return column;
-    }
-
-    public void setColumn(String column) {
-        this.column = column;
-    }
-
-    public Long getDefaultTenantId() {
-        return defaultTenantId;
-    }
-
-    public void setDefaultTenantId(Long defaultTenantId) {
-        this.defaultTenantId = defaultTenantId;
-    }
-
-    public boolean isForceDefault() {
-        return forceDefault;
-    }
-
-    public void setForceDefault(boolean forceDefault) {
-        this.forceDefault = forceDefault;
-    }
-
-    public List<String> getIgnoreTables() {
-        return ignoreTables;
-    }
-
-    public void setIgnoreTables(List<String> ignoreTables) {
-        this.ignoreTables = ignoreTables;
-    }
 }
+

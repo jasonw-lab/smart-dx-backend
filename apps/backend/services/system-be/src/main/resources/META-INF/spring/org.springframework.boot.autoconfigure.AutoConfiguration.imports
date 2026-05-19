@@ -1,0 +1,2 @@
+com.smartdx.system.config.SystemAutoConfiguration
+com.smartdx.system.config.SystemFlywayConfig

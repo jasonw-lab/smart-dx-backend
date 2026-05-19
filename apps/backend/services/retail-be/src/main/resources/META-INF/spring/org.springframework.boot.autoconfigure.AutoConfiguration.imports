@@ -1,0 +1,2 @@
+com.smartdx.retail.config.RetailAutoConfiguration
+com.smartdx.retail.config.RetailFlywayConfig

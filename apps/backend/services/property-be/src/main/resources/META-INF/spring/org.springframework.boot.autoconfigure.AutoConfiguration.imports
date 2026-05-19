@@ -1,0 +1,2 @@
+com.smartdx.property.config.PropertyAutoConfiguration
+com.smartdx.property.config.PropertyFlywayConfig

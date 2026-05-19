@@ -1,0 +1,120 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: system-be
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    table: flyway_schema_history_system
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+
+# MyBatis Plus
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.smartdx.system.model.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# Multi-tenant
+tenant:
+  enabled: true
+  ignore-tables:
+    - sys_tenant
+    - flyway_schema_history_system
+
+# Security
+security:
+  session:
+    type: jwt
+    access-token-time-to-live: 7200
+    refresh-token-time-to-live: 604800
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:smartdx-shared-secret-key-2024-must-be-at-least-256-bits-long}
+  ignore-urls:
+    - /api/v1/auth/**
+    - /actuator/**
+    - /v3/api-docs/**
+    - /swagger-ui/**
+    - /doc.html
+  unsecured-urls:
+    - /api/v1/auth/**
+    - /actuator/**
+    - /v3/api-docs/**
+    - /swagger-ui/**
+    - /doc.html
+
+# Captcha
+captcha:
+  required: ${CAPTCHA_REQUIRED:false}
+  width: 120
+  height: 40
+  code-length: 4
+  expire-seconds: 300
+
+# OpenAPI
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+
+knife4j:
+  enable: true
+  setting:
+    language: en
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Logging
+logging:
+  level:
+    com.smartdx: DEBUG

@@ -56,55 +56,42 @@ services:
       timeout: 10s
       retries: 5
 
-  property-be:
+  # Modular Monolith: Single unified backend application
+  # Combines property-be, system-be, retail-be into one JVM
+  # See: docs/adr/006-modular-monolith-deployment.md
+  smart-dx-be:
     build:
-      context: ../apps/backend/services/property-be
-      dockerfile: Dockerfile
-    container_name: smart-dx-property-be
+      context: ../apps/backend
+      dockerfile: app/Dockerfile
+    container_name: smart-dx-be
     restart: unless-stopped
     ports:
-      - "8081:8081"
+      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
+      - MYSQL_DATABASE=smart_dx_db
       - MYSQL_USER=root
       - MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD:-root123}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - OPENSEARCH_HOST=opensearch
       - OPENSEARCH_PORT=9200
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-smartdx-shared-secret-key-2024-must-be-at-least-256-bits-long}
+      - CAPTCHA_REQUIRED=${CAPTCHA_REQUIRED:-false}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
-    mem_limit: 300m
+    mem_limit: 768m
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
-      start_period: 60s
+      start_period: 90s
       retries: 3
-
-  # retail-be (Phase 3で追加)
-  # retail-be:
-  #   build:
-  #     context: ../apps/backend/services/retail-be
-  #     dockerfile: Dockerfile
-  #   container_name: smart-dx-retail-be
-  #   restart: unless-stopped
-  #   ports:
-  #     - "8082:8080"
-  #   environment:
-  #     - SPRING_PROFILES_ACTIVE=docker
-  #     - JAVA_OPTS=-Xmx256m -Xms128m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   mem_limit: 300m
 
   nginx:
     image: nginx:alpine
@@ -115,7 +102,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - property-be
+      - smart-dx-be
 
 volumes:
   mysql_data:
