@@ -47,12 +47,10 @@ spring:
     redis:
       time-to-live: 3600000
 
-  # Flyway: FlywayAutoConfiguration is excluded in SmartDxApplication.
-  # Each domain has its own FlywayConfig with separate location and history table:
-  # - PropertyFlywayConfig -> flyway_schema_history_property
-  # - SystemFlywayConfig   -> flyway_schema_history_system
-  # - RetailFlywayConfig   -> flyway_schema_history_retail
-  # To disable a domain's migration: smartdx.flyway.{domain}.enabled=false
+  # Flyway: 既定では全ドメイン無効 (DB スキーマは docs/db/smart_dx_db.sql で直接管理)。
+  # 各ドメインの FlywayConfig (Property/System/Retail) と V*.sql migration はサンプルとして保持。
+  # 利用する場合: smartdx.flyway.{property|system|retail}.enabled=true で有効化。
+  # FlywayAutoConfiguration は SmartDxApplication で除外済み。
 
 # MyBatis Plus
 mybatis-plus:
@@ -79,6 +77,7 @@ tenant:
     - sys_config
     - gen_table
     - gen_table_column
+    # Flyway を有効化した場合用 (現在は未作成のテーブル、サンプルとして保持)
     - flyway_schema_history
     - flyway_schema_history_property
     - flyway_schema_history_system

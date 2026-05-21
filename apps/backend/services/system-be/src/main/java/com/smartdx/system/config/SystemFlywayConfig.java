@@ -9,18 +9,18 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 
 /**
- * System domain Flyway configuration.
+ * System domain Flyway configuration (sample, disabled by default).
  * <p>
- * Uses separate migration location and history table to avoid conflicts
- * with other domains in the modular monolith deployment.
+ * DB スキーマは {@code docs/db/smart_dx_db.sql} で直接管理する運用。
+ * このクラスは Flyway 移行が必要になった将来のためのサンプルとして残してある。
  * </p>
  * <p>
- * Enabled by default. Disable with: smartdx.flyway.system.enabled=false
+ * Disabled by default. Enable with: smartdx.flyway.system.enabled=true
  * </p>
  */
 @Configuration
 @ConditionalOnClass(Flyway.class)
-@ConditionalOnProperty(name = "smartdx.flyway.system.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "smartdx.flyway.system.enabled", havingValue = "true", matchIfMissing = false)
 public class SystemFlywayConfig {
 
     @Bean(initMethod = "migrate")

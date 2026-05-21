@@ -24,8 +24,10 @@ import org.redisson.spring.starter.RedissonAutoConfigurationV2;
  * via AutoConfiguration.imports mechanism.
  * </p>
  * <p>
- * FlywayAutoConfiguration is excluded because each domain has its own FlywayConfig
- * with separate migration location and history table.
+ * FlywayAutoConfiguration is excluded because DB schema is managed manually
+ * via {@code docs/db/smart_dx_db.sql} (see CLAUDE.md "DB スキーマ管理").
+ * 各ドメインの FlywayConfig はサンプルとして残してあり、既定では無効。
+ * 有効化は {@code smartdx.flyway.{property|system|retail}.enabled=true} で行う。
  * </p>
  *
  * @see <a href="docs/adr/006-modular-monolith-deployment.md">ADR-006</a>
