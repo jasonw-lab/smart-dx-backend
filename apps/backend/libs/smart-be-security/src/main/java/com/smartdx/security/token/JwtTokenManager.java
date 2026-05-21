@@ -18,13 +18,11 @@ import com.smartdx.security.constant.SecurityConstants;
 import com.smartdx.security.model.AuthenticationToken;
 import com.smartdx.security.model.RoleDataScope;
 import com.smartdx.security.model.UserDetails;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -36,9 +34,10 @@ import java.util.stream.Collectors;
 
 /**
  * JWT Token 管理器
+ * <p>
+ * Bean registration is handled by {@link com.smartdx.security.config.SecurityAutoConfiguration}
+ * </p>
  */
-@ConditionalOnProperty(value = "security.session.type", havingValue = "jwt")
-@Service
 public class JwtTokenManager implements TokenManager {
 
     private final SecurityProperties securityProperties;

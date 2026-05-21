@@ -1,6 +1,11 @@
 server:
   port: 8080
 
+# Dotenv configuration - load .env from apps/backend/app/
+env:
+  location: file:apps/backend/app/.env
+  ignore-missing: true
+
 spring:
   application:
     name: smart-dx-app
@@ -160,6 +165,8 @@ management:
       enabled: true
     readinessState:
       enabled: true
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:false}
 
 # OpenAPI (Knife4j)
 springdoc:

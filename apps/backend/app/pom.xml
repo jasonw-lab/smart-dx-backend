@@ -34,6 +34,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Dotenv for .env file loading -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
