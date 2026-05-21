@@ -3,8 +3,11 @@ package com.smartdx.app;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration;
 import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
+import org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
+import org.redisson.spring.starter.RedissonAutoConfigurationV2;
 
 /**
  * Smart DX Unified Application
@@ -29,7 +32,12 @@ import org.springframework.cache.annotation.EnableCaching;
  */
 @SpringBootApplication(
         scanBasePackages = "com.smartdx.app",
-        exclude = FlywayAutoConfiguration.class
+        exclude = {
+                FlywayAutoConfiguration.class,
+                RedisReactiveAutoConfiguration.class,
+                RedisReactiveHealthContributorAutoConfiguration.class,
+                RedissonAutoConfigurationV2.class
+        }
 )
 @MapperScan({
         "com.smartdx.property.mapper",

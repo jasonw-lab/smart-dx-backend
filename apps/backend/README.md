@@ -76,7 +76,7 @@
 **环境要求**：JDK 17+ · MySQL 8.0+ · Redis 6.0+
 
 1. 克隆项目：`git clone https://gitee.com/youlaiorg/youlai-boot-tenant.git`
-2. 导入数据库：`sql/property_admin_tenant.sql`
+2. 导入数据库：`sql/smart_dx_db.sql`
 3. 修改配置（可选，默认已配置线上只读数据源）：`src/main/resources/application-dev.yml`
 4. 启动服务（端口由 `.env` 的 `SERVER_PORT` 控制，默认 `8000`），访问 `http://localhost:${SERVER_PORT}/doc.html`
 

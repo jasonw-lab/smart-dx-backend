@@ -13,7 +13,7 @@
 ## 主要ドキュメント
 
 ### DB設計
-- `design/db/property_admin_tenant.sql` - テナント管理テーブル
+- `design/db/smart_dx_db.sql` - テナント管理テーブル
 - `design/db/property_business_schema_v0.4.sql` - ビジネステーブル
 - `design/db/property_demo_data.sql` - デモデータ
 
