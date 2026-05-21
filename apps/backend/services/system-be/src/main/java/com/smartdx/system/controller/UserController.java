@@ -3,6 +3,7 @@ package com.smartdx.system.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.smartdx.core.result.PageResult;
 import com.smartdx.core.result.Result;
+import com.smartdx.system.model.dto.CurrentUserDTO;
 import com.smartdx.system.model.entity.User;
 import com.smartdx.system.model.query.UserQuery;
 import com.smartdx.system.model.vo.UserVO;
@@ -25,6 +26,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+    @Operation(summary = "Get current logged-in user info")
+    @GetMapping("/me")
+    public Result<CurrentUserDTO> getCurrentUser() {
+        return Result.success(userService.getCurrentUserInfo());
+    }
 
     @Operation(summary = "Get user by ID")
     @GetMapping("/{id}")
