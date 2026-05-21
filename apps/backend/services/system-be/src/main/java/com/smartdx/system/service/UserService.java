@@ -3,6 +3,7 @@ package com.smartdx.system.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.smartdx.system.model.entity.User;
 import com.smartdx.system.model.query.UserQuery;
+import com.smartdx.system.model.dto.CurrentUserDTO;
 import com.smartdx.system.model.vo.UserVO;
 
 import java.util.List;
@@ -46,4 +47,9 @@ public interface UserService {
      * Reset user password
      */
     void resetPassword(Long id, String password);
+
+    /**
+     * Get current logged-in user info
+     */
+    CurrentUserDTO getCurrentUserInfo();
 }

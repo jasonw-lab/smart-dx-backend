@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.smartdx.core.exception.BusinessException;
+import com.smartdx.security.util.SecurityUtils;
 import com.smartdx.system.mapper.UserMapper;
+import com.smartdx.system.model.dto.CurrentUserDTO;
 import com.smartdx.system.model.entity.User;
 import com.smartdx.system.model.query.UserQuery;
 import com.smartdx.system.model.vo.UserVO;
@@ -98,6 +100,31 @@ public class UserServiceImpl implements UserService {
         user.setId(id);
         user.setPassword(passwordEncoder.encode(password));
         userMapper.updateById(user);
+    }
+
+    @Override
+    public CurrentUserDTO getCurrentUserInfo() {
+        com.smartdx.security.model.UserDetails userDetails = SecurityUtils.getCurrentUser();
+        if (userDetails == null) {
+            throw new BusinessException("User not authenticated");
+        }
+
+        CurrentUserDTO dto = new CurrentUserDTO();
+        dto.setUserId(userDetails.getUserId());
+        dto.setUsername(userDetails.getUsername());
+        dto.setNickname(userDetails.getNickname());
+        dto.setCanSwitchTenant(userDetails.getCanSwitchTenant());
+        dto.setRoles(userDetails.getRoleCodes());
+        // perms can be populated later if needed
+        dto.setPerms(null);
+
+        // Get avatar from database
+        User user = userMapper.selectById(userDetails.getUserId());
+        if (user != null) {
+            dto.setAvatar(user.getAvatar());
+        }
+
+        return dto;
     }
 
     private UserVO convertToVO(User user) {
