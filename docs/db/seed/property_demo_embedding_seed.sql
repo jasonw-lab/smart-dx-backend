@@ -1,10 +1,9 @@
 -- ============================================================================
--- Migration V4: Upsert property_demo_embedding seed data
--- Date: 2026-05-19
--- Description: V2 でカラム追加後に DEMO シードデータを upsert
--- Note: 既定では未実行 (smartdx.flyway.property.enabled=true で有効化)。
---       同じ内容を docs/db/seed/property_demo_embedding_seed.sql に保持。
+-- DEMO seed data for property_demo_embedding
+-- 由来: services/property-be Flyway V4 (廃止) を docs/db/seed へ移管
+-- 用途: smart_dx_db を初期化した後に手動で投入する DEMO 用ベクトルデータ
 -- ============================================================================
+USE smart_dx_db;
 
 -- 既存行があれば更新、なければ挿入
 INSERT INTO `property_demo_embedding` (`tenant_id`, `demo_ref`, `embedding_vector`, `thumbnail_url`, `title`, `description`, `is_active`)
