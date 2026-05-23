@@ -6,6 +6,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,9 @@ public class UserDetails implements org.springframework.security.core.userdetail
     private String nickname;
     private Integer status;
     private Set<String> roleCodes;
+    private List<RoleDataScope> dataScopes;
     private Collection<SimpleGrantedAuthority> authorities;
+    private Boolean canSwitchTenant;
 
     public UserDetails() {
     }
@@ -129,7 +132,23 @@ public class UserDetails implements org.springframework.security.core.userdetail
         this.roleCodes = roleCodes;
     }
 
+    public List<RoleDataScope> getDataScopes() {
+        return dataScopes;
+    }
+
+    public void setDataScopes(List<RoleDataScope> dataScopes) {
+        this.dataScopes = dataScopes;
+    }
+
     public void setAuthorities(Collection<SimpleGrantedAuthority> authorities) {
         this.authorities = authorities;
+    }
+
+    public Boolean getCanSwitchTenant() {
+        return canSwitchTenant;
+    }
+
+    public void setCanSwitchTenant(Boolean canSwitchTenant) {
+        this.canSwitchTenant = canSwitchTenant;
     }
 }

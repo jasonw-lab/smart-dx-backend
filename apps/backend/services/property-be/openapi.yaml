@@ -11,71 +11,94 @@ info:
     name: Smart DX Team
 
 servers:
-  - url: http://localhost:8081/api
+  - url: http://localhost:8081/api/v1
     description: Local development
-  - url: https://api.example.com/api/property
+  - url: https://api.example.com/api/v1/property
     description: Production
 
 tags:
-  - name: Auth
-    description: 認証・認可
   - name: Property
     description: 物件管理
   - name: Search
     description: 物件検索
+  - name: Chatbot
+    description: Chatbot検索（自然言語入力による物件検索）
+  - name: Import
+    description: 物件一括取込
+  - name: Asset
+    description: アセット管理
+  - name: Embedding
+    description: 埋め込みベクトル
   - name: System
     description: システム管理
 
 paths:
-  /auth/login:
+  /properties:
     post:
       tags:
-        - Auth
-      summary: ログイン
-      operationId: login
+        - Property
+      summary: 物件登録（CSV/Excel一括）
+      operationId: createProperties
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              type: object
+              required:
+                - listedYear
+                - area
+              properties:
+                listedYear:
+                  type: string
+                  description: 掲載年
+                area:
+                  type: string
+                  description: エリア
+                csv:
+                  type: string
+                  format: binary
+                  description: CSVファイル
+                excel:
+                  type: string
+                  format: binary
+                  description: Excelファイル
+                photos[]:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: 画像ファイル（複数可）
       responses:
-        '200':
-          description: ログイン成功
+        '202':
+          description: 取込ジョブ受付完了
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
-          description: 認証失敗
+                $ref: '#/components/schemas/ImportJobResponse'
+        '400':
+          description: バリデーションエラー
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /properties:
-    get:
+  /properties/search:
+    post:
       tags:
-        - Property
-      summary: 物件一覧取得
-      operationId: listProperties
+        - Search
+      summary: 物件検索
+      operationId: searchProperties
       security:
         - BearerAuth: []
-      parameters:
-        - name: pageNum
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: pageSize
-          in: query
-          schema:
-            type: integer
-            default: 10
-        - name: keyword
-          in: query
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertySearchRequest'
       responses:
         '200':
           description: 成功
@@ -84,91 +107,307 @@ paths:
               schema:
                 $ref: '#/components/schemas/PropertyListResponse'
 
-    post:
-      tags:
-        - Property
-      summary: 物件登録
-      operationId: createProperty
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PropertyCreateRequest'
-      responses:
-        '200':
-          description: 登録成功
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PropertyResponse'
-
-  /properties/{id}:
+  /properties/{propertyId}:
     get:
       tags:
         - Property
       summary: 物件詳細取得
-      operationId: getProperty
+      operationId: getPropertyDetail
       security:
         - BearerAuth: []
       parameters:
-        - name: id
+        - name: propertyId
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            format: uuid
+          description: 物件キー（UUID）
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [published, draft, all]
+          description: スコープ
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PropertyResponse'
+                $ref: '#/components/schemas/PropertyDetailResponse'
         '404':
           description: 物件が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /properties/search/similar:
-    post:
+  /properties/{propertyKey}/similar:
+    get:
       tags:
         - Search
       summary: 類似物件検索
       operationId: searchSimilarProperties
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SimilarSearchRequest'
+      parameters:
+        - name: propertyKey
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 基準物件キー
+        - name: topK
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: 取得件数
+        - name: minScore
+          in: query
+          schema:
+            type: number
+            format: float
+            default: 0.7
+          description: 最小スコア閾値
       responses:
         '200':
           description: 成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PropertyListResponse'
+                $ref: '#/components/schemas/SimilarPropertyListResponse'
+        '404':
+          description: 物件が見つかりません
+        '422':
+          description: ベクトル未生成
 
-  /actuator/health:
+  /properties/assets/{assetKey}/original:
     get:
       tags:
-        - System
-      summary: ヘルスチェック
-      operationId: healthCheck
+        - Asset
+      summary: オリジナル画像URL取得
+      operationId: getAssetOriginalUrl
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: assetKey
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: アセットキー
       responses:
         '200':
-          description: サービス正常
+          description: 成功
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: UP
+                $ref: '#/components/schemas/AssetUrlResponse'
+        '404':
+          description: アセットが見つかりません
+
+  /properties/assets/{assetKey}/thumbnail:
+    get:
+      tags:
+        - Asset
+      summary: サムネイル画像URL取得
+      operationId: getAssetThumbnailUrl
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: assetKey
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: アセットキー
+        - name: size
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [sm, md, lg]
+          description: サイズ
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetUrlResponse'
+        '404':
+          description: アセットが見つかりません
+
+  /properties/assets/docs/{docKey}:
+    get:
+      tags:
+        - Asset
+      summary: ドキュメントURL取得
+      operationId: getDocumentUrl
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: docKey
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ドキュメントキー
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetUrlResponse'
+        '404':
+          description: ドキュメントが見つかりません
+
+  /properties/chatbot/search:
+    post:
+      tags:
+        - Chatbot
+      summary: Chatbot検索
+      description: 自然言語入力から検索条件を抽出し、物件検索を実行する
+      operationId: chatbotSearch
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatbotSearchRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatbotSearchResponse'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /properties/embeddings:
+    post:
+      tags:
+        - Embedding
+      summary: 埋め込みベクトル生成リクエスト
+      operationId: requestEmbedding
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmbeddingRequest'
+      responses:
+        '202':
+          description: リクエスト受付完了
+
+  /property-import-jobs:
+    get:
+      tags:
+        - Import
+      summary: 取込ジョブ一覧取得
+      operationId: listImportJobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobListResponse'
+
+  /property-import-jobs/{jobId}:
+    get:
+      tags:
+        - Import
+      summary: 取込ジョブ詳細取得
+      operationId: getImportJob
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ジョブID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobDetailResponse'
+        '404':
+          description: ジョブが見つかりません
+
+  /property-import-jobs/{jobId}/errors:
+    get:
+      tags:
+        - Import
+      summary: 取込エラー一覧取得
+      operationId: listImportJobErrors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ジョブID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobErrorListResponse'
+
+  /system/test-config:
+    get:
+      tags:
+        - System
+      summary: テスト設定取得
+      operationId: getTestConfig
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestConfigResponse'
 
 components:
   securitySchemes:
@@ -178,64 +417,41 @@ components:
       bearerFormat: JWT
 
   schemas:
-    LoginRequest:
-      type: object
-      required:
-        - username
-        - password
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-
-    LoginResponse:
+    PropertySearchRequest:
       type: object
       properties:
-        code:
+        scope:
           type: string
-          example: "00000"
-        msg:
+          enum: [published, draft, all]
+          default: published
+        keyword:
           type: string
-        data:
-          type: object
-          properties:
-            accessToken:
-              type: string
-            refreshToken:
-              type: string
-            tokenType:
-              type: string
-              example: Bearer
-            expiresIn:
-              type: integer
-
-    PropertyCreateRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        address:
-          type: string
-        price:
-          type: number
         area:
-          type: number
-        description:
           type: string
-
-    PropertyResponse:
-      type: object
-      properties:
-        code:
+        propertyType:
           type: string
-          example: "00000"
-        msg:
+        priceMin:
+          type: integer
+          format: int64
+        priceMax:
+          type: integer
+          format: int64
+        priorityRank:
           type: string
-        data:
-          $ref: '#/components/schemas/Property'
+        sortBy:
+          type: string
+          default: listedDate
+        orderBy:
+          type: string
+          enum: [asc, desc]
+          default: desc
+        page:
+          type: integer
+          default: 0
+        size:
+          type: integer
+          default: 20
+          maximum: 1000
 
     PropertyListResponse:
       type: object
@@ -251,48 +467,430 @@ components:
             list:
               type: array
               items:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/PropertySummary'
             total:
               type: integer
               format: int64
 
-    Property:
+    PropertySummary:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        tenantId:
-          type: integer
-          format: int64
-        name:
+        propertyKey:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        area:
           type: string
         address:
           type: string
-        price:
+        propertyType:
+          type: string
+        priceJpy:
+          type: integer
+          format: int64
+        layout:
+          type: string
+        areaSqm:
           type: number
+        stationWalkMin:
+          type: integer
+        builtYearMonth:
+          type: string
+        listedDate:
+          type: string
+          format: date
+        priorityRank:
+          type: string
+        thumbnailUrl:
+          type: string
+
+    PropertyDetailResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "00000"
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/PropertyDetail'
+
+    PropertyDetail:
+      type: object
+      properties:
+        propertyKey:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        version:
+          type: integer
         area:
+          type: string
+        address:
+          type: string
+        propertyType:
+          type: string
+        priceJpy:
+          type: integer
+          format: int64
+        layout:
+          type: string
+        areaSqm:
           type: number
-        description:
+        stationWalkMin:
+          type: integer
+        builtYearMonth:
           type: string
-        createTime:
+        listedDate:
           type: string
-          format: date-time
-        updateTime:
+          format: date
+        priorityRank:
+          type: string
+        reviewStatus:
+          type: string
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetInfo'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentInfo'
+        review:
+          $ref: '#/components/schemas/ReviewInfo'
+        permissions:
+          $ref: '#/components/schemas/PermissionInfo'
+
+    AssetInfo:
+      type: object
+      properties:
+        assetKey:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        mimeType:
+          type: string
+        order:
+          type: integer
+
+    DocumentInfo:
+      type: object
+      properties:
+        docKey:
+          type: string
+        filename:
+          type: string
+        mimeType:
+          type: string
+
+    ReviewInfo:
+      type: object
+      properties:
+        status:
+          type: string
+        memo:
+          type: string
+        reviewedAt:
           type: string
           format: date-time
 
-    SimilarSearchRequest:
+    PermissionInfo:
+      type: object
+      properties:
+        canViewReviewMemo:
+          type: boolean
+        canEditReviewMemo:
+          type: boolean
+        canViewSensitiveDocs:
+          type: boolean
+
+    SimilarPropertyListResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/SimilarProperty'
+            total:
+              type: integer
+
+    SimilarProperty:
+      type: object
+      properties:
+        propertyKey:
+          type: string
+          format: uuid
+        score:
+          type: number
+          format: float
+        summary:
+          $ref: '#/components/schemas/PropertySummary'
+
+    AssetUrlResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            url:
+              type: string
+            mimeType:
+              type: string
+            contentDisposition:
+              type: string
+
+    EmbeddingRequest:
       type: object
       required:
-        - propertyId
+        - propertyKey
       properties:
-        propertyId:
+        propertyKey:
+          type: string
+          format: uuid
+
+    ImportJobResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            jobRef:
+              type: string
+            status:
+              type: string
+
+    ImportJobListResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImportJobSummary'
+            total:
+              type: integer
+
+    ImportJobSummary:
+      type: object
+      properties:
+        jobRef:
+          type: string
+        status:
+          type: string
+        totalCount:
+          type: integer
+        successCount:
+          type: integer
+        errorCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ImportJobDetailResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/ImportJobDetail'
+
+    ImportJobDetail:
+      type: object
+      properties:
+        jobRef:
+          type: string
+        status:
+          type: string
+        area:
+          type: string
+        listedYear:
+          type: integer
+        totalCount:
+          type: integer
+        successCount:
+          type: integer
+        errorCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    ImportJobErrorListResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportJobError'
+
+    ImportJobError:
+      type: object
+      properties:
+        rowNo:
+          type: integer
+        propertyKey:
+          type: string
+        errorCode:
+          type: string
+        message:
+          type: string
+
+    TestConfigResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+
+    ChatbotSearchRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: 自然言語での検索メッセージ
+          maxLength: 2000
+          example: "渋谷で2LDK、15万以下で探して"
+        conversationHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationMessage'
+          description: 会話履歴（オプション、最大30件）
+          maxItems: 30
+        previousCondition:
+          $ref: '#/components/schemas/PropertySearchRequest'
+          description: 直前の検索条件（マージ用）
+
+    ConversationMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+
+    ChatbotSearchResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "00000"
+        msg:
+          type: string
+        data:
+          $ref: '#/components/schemas/ChatbotSearchResult'
+
+    ChatbotSearchResult:
+      type: object
+      properties:
+        extractionMethod:
+          type: string
+          enum: [rule_based, llm, rule_based_fallback, none]
+          description: 抽出方法
+        llmUsed:
+          type: boolean
+          description: LLMを使用したかどうか
+        llmModel:
+          type: string
+          description: 使用したLLMモデル名（LLM使用時のみ）
+        extractedCondition:
+          $ref: '#/components/schemas/ExtractedCondition'
+        searchResults:
+          type: object
+          properties:
+            list:
+              type: array
+              items:
+                $ref: '#/components/schemas/PropertySummary'
+            total:
+              type: integer
+              format: int64
+        reply:
+          type: string
+          description: ユーザーへの応答メッセージ
+        clarificationNeeded:
+          type: boolean
+          description: 確認質問が必要かどうか
+        clarificationQuestion:
+          type: string
+          description: 確認質問
+
+    ExtractedCondition:
+      type: object
+      properties:
+        scope:
+          type: string
+          enum: [published]
+          description: スコープ（常にpublished）
+        keyword:
+          type: string
+        searchItems:
+          $ref: '#/components/schemas/ExtractedSearchItems'
+        sortBy:
+          type: string
+        orderBy:
+          type: string
+          enum: [asc, desc]
+
+    ExtractedSearchItems:
+      type: object
+      properties:
+        area:
+          type: array
+          items:
+            type: string
+        propertyType:
+          type: array
+          items:
+            type: string
+        priceJpyMin:
           type: integer
           format: int64
-        limit:
+        priceJpyMax:
           type: integer
-          default: 10
+          format: int64
+        stationWalkMax:
+          type: integer
 
     ErrorResponse:
       type: object

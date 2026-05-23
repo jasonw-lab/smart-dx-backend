@@ -1,18 +1,23 @@
 package com.smartdx.core.result;
 
 import cn.hutool.core.util.StrUtil;
+import lombok.Data;
 
 import java.io.Serializable;
 
 /**
- * 統一レスポンス構造体
+ * 统一响应结构体
  *
- * @param <T> データ型
- */
+ * @author Ray.Hao
+ * @since 2022/1/30
+ **/
+@Data
 public class Result<T> implements Serializable {
 
     private String code;
+
     private T data;
+
     private String msg;
 
     public static <T> Result<T> success() {
@@ -55,6 +60,14 @@ public class Result<T> implements Serializable {
         return result(resultCode.getCode(), resultCode.getMsg(), data);
     }
 
+    public static <T> Result<T> failed(IResultCode resultCode, String msg, T data) {
+        return result(resultCode.getCode(), StrUtil.isNotBlank(msg) ? msg : resultCode.getMsg(), data);
+    }
+
+    private static <T> Result<T> result(IResultCode resultCode, T data) {
+        return result(resultCode.getCode(), resultCode.getMsg(), data);
+    }
+
     private static <T> Result<T> result(String code, String msg, T data) {
         Result<T> result = new Result<>();
         result.setCode(code);
@@ -63,27 +76,4 @@ public class Result<T> implements Serializable {
         return result;
     }
 
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public void setData(T data) {
-        this.data = data;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
 }

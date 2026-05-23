@@ -9,6 +9,11 @@ public final class SecurityConstants {
     }
 
     /**
+     * ログインパス
+     */
+    public static final String LOGIN_PATH = "/api/v1/auth/login";
+
+    /**
      * Bearer トークンプレフィックス
      */
     public static final String BEARER_TOKEN_PREFIX = "Bearer ";

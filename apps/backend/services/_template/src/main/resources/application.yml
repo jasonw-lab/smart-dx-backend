@@ -20,10 +20,10 @@ spring:
       port: ${REDIS_PORT:6379}
 
 # Multi-tenant configuration
-smart-be-tenant:
+tenant:
   enabled: true
   column: tenant_id
-  default-tenant: default
+  default-tenant-id: 1
   force-default: false  # Set to true for single-tenant operation
   ignore-tables:
     - sys_tenant

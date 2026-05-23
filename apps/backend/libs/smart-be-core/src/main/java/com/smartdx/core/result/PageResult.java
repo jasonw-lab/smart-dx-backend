@@ -1,94 +1,85 @@
 package com.smartdx.core.result;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * ページングレスポンス構造体
+ * 分页响应结构体
  *
- * @param <T> データ型
+ * @author Ray.Hao
+ * @since 2022/2/18
  */
+@Data
 public class PageResult<T> implements Serializable {
 
     private String code;
+
     private String msg;
+
     private PageData<T> data;
 
     /**
-     * ページングデータからレスポンスを構築
+     * 构建分页结果（MyBatis-Plus {@link IPage}）。
+     *
+     * <p>data 为当前页记录列表；page 提供分页元信息。</p>
      */
-    public static <T> PageResult<T> success(List<T> list, long total) {
+    public static <T> PageResult<T> success(IPage<T> page) {
         PageResult<T> result = new PageResult<>();
         result.setCode(ResultCode.SUCCESS.getCode());
         result.setMsg(ResultCode.SUCCESS.getMsg());
 
+        List<T> records =
+                (page == null || page.getRecords() == null)
+                        ? Collections.emptyList()
+                        : page.getRecords();
         PageData<T> pageData = new PageData<>();
-        pageData.setList(list != null ? list : Collections.emptyList());
-        pageData.setTotal(total);
+        pageData.setList(records);
+        pageData.setTotal(page != null ? page.getTotal() : 0L);
         result.setData(pageData);
 
         return result;
     }
 
     /**
-     * リストデータからレスポンスを構築（ページング無し）
+     * 构建列表结果（无分页）。
+     *
+     * <p>page 置为 null，用于与分页返回区分。</p>
      */
     public static <T> PageResult<T> success(List<T> list) {
         PageResult<T> result = new PageResult<>();
         result.setCode(ResultCode.SUCCESS.getCode());
         result.setMsg(ResultCode.SUCCESS.getMsg());
-
         PageData<T> pageData = new PageData<>();
         pageData.setList(list != null ? list : Collections.emptyList());
-        pageData.setTotal(list != null ? list.size() : 0L);
+        pageData.setTotal(0L);
         result.setData(pageData);
-
         return result;
     }
 
-    public String getCode() {
-        return code;
+    /**
+     * 构建分页结果（手动指定total）。
+     */
+    public static <T> PageResult<T> success(List<T> list, long total) {
+        PageResult<T> result = new PageResult<>();
+        result.setCode(ResultCode.SUCCESS.getCode());
+        result.setMsg(ResultCode.SUCCESS.getMsg());
+        PageData<T> pageData = new PageData<>();
+        pageData.setList(list != null ? list : Collections.emptyList());
+        pageData.setTotal(total);
+        result.setData(pageData);
+        return result;
     }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    @Data
+    public static class PageData<T> {
 
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
-
-    public PageData<T> getData() {
-        return data;
-    }
-
-    public void setData(PageData<T> data) {
-        this.data = data;
-    }
-
-    public static class PageData<T> implements Serializable {
         private List<T> list;
+
         private long total;
-
-        public List<T> getList() {
-            return list;
-        }
-
-        public void setList(List<T> list) {
-            this.list = list;
-        }
-
-        public long getTotal() {
-            return total;
-        }
-
-        public void setTotal(long total) {
-            this.total = total;
-        }
     }
+
 }

@@ -1,35 +1,39 @@
 package com.smartdx.core.base;
 
+import com.smartdx.core.annotation.ValidField;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * クエリ基底クラス
+ * 基础分页请求对象
+ *
+ * @author Ray.Hao
+ * @since 2021/2/28
  */
-public abstract class BaseQuery implements Serializable {
+@Data
+@Schema
+public class BaseQuery implements Serializable {
 
-    /**
-     * ページ番号 (1始まり)
-     */
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Schema(description = "页码", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1")
     private Integer pageNum = 1;
 
-    /**
-     * ページサイズ
-     */
+    @Schema(description = "每页记录数", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "10")
     private Integer pageSize = 10;
 
-    public Integer getPageNum() {
-        return pageNum;
-    }
+    @Schema(description = "排序字段", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @ValidField(allowedValues = {"create_time", "update_time"})
+    private String sortBy;
 
-    public void setPageNum(Integer pageNum) {
-        this.pageNum = pageNum;
-    }
+    @Schema(description = "排序方式（正序:ASC；反序:DESC）", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    private String order;
 
-    public Integer getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(Integer pageSize) {
-        this.pageSize = pageSize;
+    public boolean isPaged() {
+        return pageNum != null && pageSize != null && pageSize > 0;
     }
 }
