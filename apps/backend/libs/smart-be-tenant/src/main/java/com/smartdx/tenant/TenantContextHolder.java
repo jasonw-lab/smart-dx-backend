@@ -1,8 +1,7 @@
 package com.smartdx.tenant;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 租户上下文工具类
@@ -10,10 +9,12 @@ import org.slf4j.LoggerFactory;
  * 使用 TransmittableThreadLocal 存储当前线程的租户ID，确保线程安全
  * 支持异步任务、线程池、消息队列等场景的上下文传递
  * </p>
+ *
+ * @author Ray.Hao
+ * @since 3.0.0
  */
+@Slf4j
 public class TenantContextHolder {
-
-    private static final Logger log = LoggerFactory.getLogger(TenantContextHolder.class);
 
     /**
      * 租户ID线程本地变量
@@ -26,9 +27,6 @@ public class TenantContextHolder {
      */
     private static final TransmittableThreadLocal<Boolean> IGNORE_TENANT_HOLDER = new TransmittableThreadLocal<>();
 
-    private TenantContextHolder() {
-    }
-
     /**
      * 设置当前租户 ID
      *
@@ -37,7 +35,7 @@ public class TenantContextHolder {
     public static void setTenantId(Long tenantId) {
         if (tenantId != null) {
             TENANT_ID_HOLDER.set(tenantId);
-            log.debug("Set tenant ID: {}", tenantId);
+            log.debug("设置当前租户ID: {}", tenantId);
         }
     }
 
@@ -57,7 +55,7 @@ public class TenantContextHolder {
      */
     public static void setIgnoreTenant(boolean ignore) {
         IGNORE_TENANT_HOLDER.set(ignore);
-        log.debug("Set ignore tenant flag: {}", ignore);
+        log.debug("设置忽略租户标志: {}", ignore);
     }
 
     /**
@@ -79,6 +77,7 @@ public class TenantContextHolder {
     public static void clear() {
         TENANT_ID_HOLDER.remove();
         IGNORE_TENANT_HOLDER.remove();
-        log.debug("Cleared tenant context");
+        log.debug("清除租户上下文");
     }
 }
+

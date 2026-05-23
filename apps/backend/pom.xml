@@ -20,9 +20,12 @@
         <module>libs/smart-be-redis</module>
         <module>libs/smart-be-opensearch</module>
         <module>libs/smart-be-observability</module>
-        <!-- Services -->
+        <!-- Services (domain modules) -->
+        <module>services/system-be</module>
         <module>services/property-be</module>
-        <!-- <module>services/retail-be</module> -->
+        <module>services/retail-be</module>
+        <!-- Bootstrap Application -->
+        <module>app</module>
     </modules>
 
     <properties>
@@ -61,6 +64,13 @@
 
         <!-- Testing -->
         <junit.version>5.10.5</junit.version>
+
+        <!-- File Storage -->
+        <minio.version>8.5.17</minio.version>
+        <aliyun-oss.version>3.18.3</aliyun-oss.version>
+
+        <!-- SMS -->
+        <aliyun-sdk-core.version>4.6.4</aliyun-sdk-core.version>
     </properties>
 
     <dependencyManagement>
@@ -169,6 +179,25 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- File Storage -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${aliyun-oss.version}</version>
+            </dependency>
+
+            <!-- SMS -->
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>aliyun-java-sdk-core</artifactId>
+                <version>${aliyun-sdk-core.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

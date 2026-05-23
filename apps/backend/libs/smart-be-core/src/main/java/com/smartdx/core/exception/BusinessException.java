@@ -1,24 +1,31 @@
 package com.smartdx.core.exception;
 
 import com.smartdx.core.result.IResultCode;
+import lombok.Getter;
 import org.slf4j.helpers.MessageFormatter;
 
 /**
- * 業務例外
+ * 自定义业务异常
+ *
+ * @author Ray
+ * @since 2022/7/31
  */
+@Getter
 public class BusinessException extends RuntimeException {
 
-    private IResultCode resultCode;
+    public IResultCode resultCode;
 
     public BusinessException(IResultCode errorCode) {
         super(errorCode.getMsg());
         this.resultCode = errorCode;
     }
 
+
     public BusinessException(IResultCode errorCode, String message) {
         super(message);
         this.resultCode = errorCode;
     }
+
 
     public BusinessException(String message, Throwable cause) {
         super(message, cause);
@@ -34,9 +41,5 @@ public class BusinessException extends RuntimeException {
 
     private static String formatMessage(String message, Object... args) {
         return MessageFormatter.arrayFormat(message, args).getMessage();
-    }
-
-    public IResultCode getResultCode() {
-        return resultCode;
     }
 }
