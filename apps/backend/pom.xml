@@ -64,6 +64,7 @@
 
         <!-- Testing -->
         <junit.version>5.10.5</junit.version>
+        <testcontainers.version>1.20.4</testcontainers.version>
 
         <!-- File Storage -->
         <minio.version>8.5.17</minio.version>
@@ -80,6 +81,15 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Testcontainers BOM -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

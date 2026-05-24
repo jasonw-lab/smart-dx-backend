@@ -691,10 +691,10 @@ public class PropertyEsSearchServiceImpl implements PropertyEsSearchService {
             vo.setRegistrantDisplayName(getString((Map<String, Object>) regMap, "displayName"));
         }
 
-        Object mainImage = source.get("mainImage");
-        if (mainImage instanceof Map<?, ?> imgMap) {
+        Map<String, Object> mainImage = asMap(source.get("mainImage"));
+        if (mainImage != null) {
             // Use original image (s3Path) instead of small thumbnail for better resolution
-            String imageKey = getString((Map<String, Object>) imgMap, "s3Path");
+            String imageKey = getString(mainImage, "s3Path");
             vo.setThumbnailUrl(resolveAssetUrl(imageKey));
         }
 
@@ -707,15 +707,35 @@ public class PropertyEsSearchServiceImpl implements PropertyEsSearchService {
         return value != null ? String.valueOf(value) : null;
     }
 
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> asMap(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Map<?, ?> m) {
+            return (Map<String, Object>) m;
+        }
+        try {
+            return objectMapper.convertValue(value, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+        } catch (IllegalArgumentException e) {
+            log.warn("Failed to coerce value to Map: type={}", value.getClass().getName());
+            return null;
+        }
+    }
+
     private String resolveAssetUrl(String objectKey) {
         if (StrUtil.isBlank(objectKey)) {
+            log.warn("resolveAssetUrl: objectKey is blank");
             return null;
         }
         MinioFileService minio = minioFileServiceProvider.getIfAvailable();
         if (minio == null) {
+            log.warn("resolveAssetUrl: MinioFileService is not available (objectKey={})", objectKey);
             return null;
         }
-        return minio.buildObjectUrl(objectKey);
+        String url = minio.buildObjectUrl(objectKey);
+        log.debug("resolveAssetUrl: objectKey={} -> url={}", objectKey, url);
+        return url;
     }
 
     private Integer getInteger(Map<String, Object> source, String field) {

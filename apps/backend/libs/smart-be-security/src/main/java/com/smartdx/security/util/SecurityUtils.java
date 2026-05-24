@@ -64,6 +64,13 @@ public final class SecurityUtils {
     }
 
     /**
+     * 現在のテナントIDを取得 (alias)
+     */
+    public static Long getTenantId() {
+        return getCurrentTenantId();
+    }
+
+    /**
      * 現在のユーザー名を取得
      */
     public static String getCurrentUsername() {
