@@ -1,9 +1,11 @@
 package com.smartdx.property.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.core5.http.HttpHost;
+import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -32,7 +34,7 @@ public class PropertyOpenSearchProperties {
     private Duration requestTimeout = Duration.ofSeconds(3);
 
     @Bean
-    public OpenSearchClient openSearchClient() {
+    public OpenSearchClient openSearchClient(ObjectMapper objectMapper) {
         System.out.println("[OpenSearch] enabled=" + enabled + ", endpoint=" + endpoint);
         if (!enabled) {
             return null;
@@ -47,6 +49,7 @@ public class PropertyOpenSearchProperties {
             HttpHost httpHost = new HttpHost(scheme, host, port);
             var transport = ApacheHttpClient5TransportBuilder
                     .builder(httpHost)
+                    .setMapper(new JacksonJsonpMapper(objectMapper))
                     .build();
             return new OpenSearchClient(transport);
         } catch (Exception e) {

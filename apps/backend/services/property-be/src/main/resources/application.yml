@@ -137,6 +137,13 @@ opensearch:
   username: ${OPENSEARCH_USER:}
   password: ${OPENSEARCH_PASSWORD:}
 
+# Property Search OpenSearch (consumed by PropertyOpenSearchProperties)
+property:
+  search:
+    opensearch:
+      enabled: ${PROPERTY_SEARCH_OPENSEARCH_ENABLED:true}
+      endpoint: ${PROPERTY_SEARCH_OPENSEARCH_ENDPOINT:${OPENSEARCH_SCHEME:http}://${OPENSEARCH_HOST:localhost}:${OPENSEARCH_PORT:9200}}
+
 # Chatbot
 chatbot:
   llm:
