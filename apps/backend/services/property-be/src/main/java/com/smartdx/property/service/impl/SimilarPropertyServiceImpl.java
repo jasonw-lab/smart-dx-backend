@@ -1,6 +1,7 @@
 package com.smartdx.property.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartdx.core.exception.BusinessException;
 import com.smartdx.property.file.MinioFileService;
 import com.smartdx.property.config.PropertyOpenSearchProperties;
@@ -49,16 +50,19 @@ public class SimilarPropertyServiceImpl implements SimilarPropertyService {
     private final OpenSearchClient client;
     private final ObjectProvider<MinioFileService> minioFileServiceProvider;
     private final PropertyDemoEmbeddingMapper demoEmbeddingMapper;
+    private final ObjectMapper objectMapper;
 
     public SimilarPropertyServiceImpl(
             PropertyOpenSearchProperties properties,
             @Autowired(required = false) OpenSearchClient client,
             ObjectProvider<MinioFileService> minioFileServiceProvider,
-            @Autowired(required = false) PropertyDemoEmbeddingMapper demoEmbeddingMapper) {
+            @Autowired(required = false) PropertyDemoEmbeddingMapper demoEmbeddingMapper,
+            ObjectMapper objectMapper) {
         this.properties = properties;
         this.client = client;
         this.minioFileServiceProvider = minioFileServiceProvider;
         this.demoEmbeddingMapper = demoEmbeddingMapper;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -330,11 +334,10 @@ public class SimilarPropertyServiceImpl implements SimilarPropertyService {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     private String extractThumbnailUrl(Map<String, Object> source) {
-        Object mainImage = source.get("mainImage");
-        if (mainImage instanceof Map<?, ?> imgMap) {
-            String thumbnailKey = getString((Map<String, Object>) imgMap, "thumbnailSmKey");
+        Map<String, Object> mainImage = asMap(source.get("mainImage"));
+        if (mainImage != null) {
+            String thumbnailKey = getString(mainImage, "thumbnailSmKey");
             return resolveAssetUrl(thumbnailKey);
         }
         return null;
@@ -358,15 +361,15 @@ public class SimilarPropertyServiceImpl implements SimilarPropertyService {
         vo.setPriorityRank(getString(source, "priorityRank"));
         vo.setReviewStatus(getString(source, "reviewStatus"));
 
-        Object registrant = source.get("registrant");
-        if (registrant instanceof Map<?, ?> regMap) {
-            vo.setRegistrantUserId(getLongFromString((Map<String, Object>) regMap, "userId"));
-            vo.setRegistrantDisplayName(getString((Map<String, Object>) regMap, "displayName"));
+        Map<String, Object> registrant = asMap(source.get("registrant"));
+        if (registrant != null) {
+            vo.setRegistrantUserId(getLongFromString(registrant, "userId"));
+            vo.setRegistrantDisplayName(getString(registrant, "displayName"));
         }
 
-        Object mainImage = source.get("mainImage");
-        if (mainImage instanceof Map<?, ?> imgMap) {
-            String thumbnailKey = getString((Map<String, Object>) imgMap, "thumbnailSmKey");
+        Map<String, Object> mainImage = asMap(source.get("mainImage"));
+        if (mainImage != null) {
+            String thumbnailKey = getString(mainImage, "thumbnailSmKey");
             vo.setThumbnailUrl(resolveAssetUrl(thumbnailKey));
         }
 
@@ -388,6 +391,22 @@ public class SimilarPropertyServiceImpl implements SimilarPropertyService {
     private String getString(Map<String, Object> source, String field) {
         Object value = source.get(field);
         return value != null ? String.valueOf(value) : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> asMap(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Map<?, ?> m) {
+            return (Map<String, Object>) m;
+        }
+        try {
+            return objectMapper.convertValue(value, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+        } catch (IllegalArgumentException e) {
+            log.warn("Failed to coerce value to Map: type={}", value.getClass().getName());
+            return null;
+        }
     }
 
     private Integer getInteger(Map<String, Object> source, String field) {
