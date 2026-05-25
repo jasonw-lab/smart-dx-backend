@@ -34,7 +34,7 @@ public class UserController {
     }
 
     @Operation(summary = "Get user by ID")
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public Result<UserVO> getUserById(@PathVariable Long id) {
         return Result.success(userService.getUserById(id));
     }
@@ -53,7 +53,7 @@ public class UserController {
     }
 
     @Operation(summary = "Update user")
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public Result<Void> updateUser(@PathVariable Long id, @RequestBody User user) {
         user.setId(id);
         userService.updateUser(user);
@@ -61,7 +61,7 @@ public class UserController {
     }
 
     @Operation(summary = "Delete user")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public Result<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return Result.success();
@@ -75,7 +75,7 @@ public class UserController {
     }
 
     @Operation(summary = "Reset user password")
-    @PatchMapping("/{id}/password")
+    @PatchMapping("/{id:\\d+}/password")
     public Result<Void> resetPassword(
             @PathVariable Long id,
             @Parameter(description = "New password") @RequestParam String password) {
