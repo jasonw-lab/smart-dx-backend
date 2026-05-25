@@ -104,10 +104,12 @@ public class JwtTokenManager implements TokenManager {
             userDetails.setRoleCodes(roleCodes);
         }
 
-        Set<SimpleGrantedAuthority> authorities = payloads.getJSONArray(JwtClaimConstants.AUTHORITIES)
-                .stream()
-                .map(authority -> new SimpleGrantedAuthority(Convert.toStr(authority)))
-                .collect(Collectors.toSet());
+        JSONArray authoritiesArray = payloads.getJSONArray(JwtClaimConstants.AUTHORITIES);
+        Set<SimpleGrantedAuthority> authorities = authoritiesArray != null
+                ? authoritiesArray.stream()
+                        .map(authority -> new SimpleGrantedAuthority(Convert.toStr(authority)))
+                        .collect(Collectors.toSet())
+                : Set.of();
 
         return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
     }
