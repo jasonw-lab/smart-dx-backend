@@ -576,7 +576,8 @@ INSERT INTO `sys_user` (`id`,`tenant_id`,`username`,`nickname`,`gender`,`passwor
 (9, 0, 'custom_user', '自定义权限用户',       1, '$2a$10$xVWsNOhHrCxh5UbpCE7/HuJ.PAOKcYAqRxD2CO2nVnJS.IAXkr5aq', 3,    'https://foruda.gitee.com/images/1723603502796844527/03cdca2a_716974.gif', '18812345683', 1, 0, 'custom@youlaitech.com', now(), NULL, now(), NULL, 0),
 -- 演示租户（tenant_id=1）の用户
 (4, 1, 'admin', '演示租户管理员',             1, '$2a$10$xVWsNOhHrCxh5UbpCE7/HuJ.PAOKcYAqRxD2CO2nVnJS.IAXkr5aq', 4,    'https://foruda.gitee.com/images/1723603502796844527/03cdca2a_716974.gif', '18812345680', 1, 1, 'demo@youlai.tech', now(), NULL, now(), NULL, 0),
-(5, 1, 'test', '演示测试人员',               1, '$2a$10$xVWsNOhHrCxh5UbpCE7/HuJ.PAOKcYAqRxD2CO2nVnJS.IAXkr5aq', 6,    'https://foruda.gitee.com/images/1723603502796844527/03cdca2a_716974.gif', '18812345681', 1, 0, 'test@youlai.tech', now(), NULL, now(), NULL, 0);
+(5, 1, 'test', '演示测试人员',               1, '$2a$10$xVWsNOhHrCxh5UbpCE7/HuJ.PAOKcYAqRxD2CO2nVnJS.IAXkr5aq', 6,    'https://foruda.gitee.com/images/1723603502796844527/03cdca2a_716974.gif', '18812345681', 1, 0, 'test@youlai.tech', now(), NULL, now(), NULL, 0),
+(10, 1, 'demo', 'デモユーザー',              1, '$2a$10$RMjyJxeJsUHCEO3zX/zP.OcqIeBlUOS02kEuODfnyNMjhSos3aOOK', 4,    'https://foruda.gitee.com/images/1723603502796844527/03cdca2a_716974.gif', '18812345684', 1, 0, 'demo@youlaitech.com', now(), NULL, now(), NULL, 0);
 
 -- ----------------------------
 -- Table structure for sys_user_role
@@ -607,6 +608,8 @@ INSERT INTO `sys_user_role` VALUES (9, 7, 0);
 INSERT INTO `sys_user_role` VALUES (4, 13, 1);
 INSERT INTO `sys_user_role` VALUES (4, 15, 1);
 INSERT INTO `sys_user_role` VALUES (5, 14, 1);
+INSERT INTO `sys_user_role` VALUES (10, 13, 1);
+INSERT INTO `sys_user_role` VALUES (10, 15, 1);
 
 
 -- ----------------------------
