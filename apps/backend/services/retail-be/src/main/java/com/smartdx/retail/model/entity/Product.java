@@ -2,6 +2,7 @@ package com.smartdx.retail.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -20,6 +21,12 @@ public class Product implements Serializable {
      */
     @TableId(type = IdType.AUTO)
     private Long id;
+
+    /**
+     * テナントID (リクエストボディからは設定不可、interceptor で自動付与)
+     */
+    @JsonIgnore
+    private Long tenantId;
 
     /**
      * Product code

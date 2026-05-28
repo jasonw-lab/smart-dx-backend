@@ -29,8 +29,23 @@ import java.util.List;
 @Slf4j
 public class UserServiceImpl implements UserService {
 
+    private static final String DEMO_USERNAME = "demo";
+
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
+    private void guardDemoUserModification(Long targetUserId) {
+        if (DEMO_USERNAME.equals(SecurityUtils.getCurrentUsername())
+                && (targetUserId == null || !targetUserId.equals(SecurityUtils.getCurrentUserId()))) {
+            throw new BusinessException("Demo user cannot modify other users");
+        }
+    }
+
+    private void guardDemoUserCreation() {
+        if (DEMO_USERNAME.equals(SecurityUtils.getCurrentUsername())) {
+            throw new BusinessException("Demo user cannot modify other users");
+        }
+    }
 
     @Override
     public UserVO getUserById(Long id) {
@@ -61,6 +76,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Long createUser(User user) {
+        guardDemoUserCreation();
+
         // Encode password
         if (StrUtil.isNotBlank(user.getPassword())) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -76,6 +93,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void updateUser(User user) {
+        guardDemoUserModification(user.getId());
+
         // Don't update password here
         user.setPassword(null);
         userMapper.updateById(user);
@@ -84,18 +103,24 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long id) {
+        guardDemoUserModification(id);
         userMapper.deleteById(id);
     }
 
     @Override
     @Transactional
     public void deleteUsers(List<Long> ids) {
+        if (ids != null) {
+            ids.forEach(this::guardDemoUserModification);
+        }
         userMapper.deleteBatchIds(ids);
     }
 
     @Override
     @Transactional
     public void resetPassword(Long id, String password) {
+        guardDemoUserModification(id);
+
         User user = new User();
         user.setId(id);
         user.setPassword(passwordEncoder.encode(password));
@@ -111,6 +136,7 @@ public class UserServiceImpl implements UserService {
 
         CurrentUserDTO dto = new CurrentUserDTO();
         dto.setUserId(userDetails.getUserId());
+        dto.setTenantId(userDetails.getTenantId());
         dto.setUsername(userDetails.getUsername());
         dto.setNickname(userDetails.getNickname());
         dto.setCanSwitchTenant(userDetails.getCanSwitchTenant());

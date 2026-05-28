@@ -1,0 +1,13 @@
+-- ============================================================
+-- Drop retail_tenant
+-- ============================================================
+-- Tenant master is consolidated into sys_tenant (system-be) as the
+-- single source of truth. retail-be no longer manages its own tenant
+-- master. See: docs/architecture/multi-tenant.md
+--
+-- Pre-conditions:
+--   * Application code that references retail_tenant has been removed.
+--   * No FK from other retail_* tables references retail_tenant
+--     (verified against V1__baseline_retail_schema.sql).
+-- ============================================================
+DROP TABLE IF EXISTS `retail_tenant`;

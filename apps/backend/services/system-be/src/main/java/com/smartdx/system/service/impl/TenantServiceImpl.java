@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Tenant service implementation
  */
-@Service
+@Service("systemTenantService")
 @RequiredArgsConstructor
 @Slf4j
 public class TenantServiceImpl implements TenantService {

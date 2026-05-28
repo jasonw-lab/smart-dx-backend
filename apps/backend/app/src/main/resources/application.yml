@@ -77,6 +77,7 @@ tenant:
     - sys_config
     - gen_table
     - gen_table_column
+    - retail_sales_detail
     # Flyway を有効化した場合用 (現在は未作成のテーブル、サンプルとして保持)
     - flyway_schema_history
     - flyway_schema_history_property
