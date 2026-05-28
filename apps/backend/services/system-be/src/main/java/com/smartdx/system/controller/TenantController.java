@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * Tenant management controller
  */
 @Tag(name = "03. Tenant Management")
-@RestController
+@RestController("systemTenantController")
 @RequestMapping("/api/v1/tenants")
 @RequiredArgsConstructor
 public class TenantController {

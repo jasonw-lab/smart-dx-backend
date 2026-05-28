@@ -10,13 +10,15 @@ spring:
     password: ${E2E_MYSQL_PASSWORD:${MYSQL_PASSWORD:123456}}
 
   flyway:
-    enabled: true
-    locations: classpath:db/migration/system
-    baseline-on-migrate: true
-    baseline-version: '0'
-    validate-on-migrate: false
-    table: flyway_schema_history_system
-    repair-on-migrate: true
+    enabled: false
+
+# Enable per-domain Flyway bootstraps (defined in {System,Retail}FlywayConfig)
+smartdx:
+  flyway:
+    system:
+      enabled: true
+    retail:
+      enabled: true
 
   data:
     redis:

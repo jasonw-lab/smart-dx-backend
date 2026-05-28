@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * グローバル例外ハンドラ
@@ -69,6 +70,17 @@ public class GlobalExceptionHandler {
     public Result<Void> handleConstraintViolationException(ConstraintViolationException e) {
         log.warn("Constraint violation: {}", e.getMessage());
         return Result.failed(ResultCode.USER_REQUEST_PARAMETER_ERROR, e.getMessage());
+    }
+
+    /**
+     * パラメータ型変換エラー (PathVariable の Long 等)
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException e) {
+        log.warn("Parameter type mismatch: {} = {}", e.getName(), e.getValue());
+        return Result.failed(ResultCode.USER_REQUEST_PARAMETER_ERROR,
+                "Invalid value for parameter '" + e.getName() + "'");
     }
 
     /**

@@ -15,6 +15,9 @@ public class CurrentUserDTO {
     @Schema(description = "User ID")
     private Long userId;
 
+    @Schema(description = "Tenant ID")
+    private Long tenantId;
+
     @Schema(description = "Username")
     private String username;
 

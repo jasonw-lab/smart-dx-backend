@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -34,9 +35,19 @@ public class AuthController {
         return Result.success(captcha);
     }
 
-    @Operation(summary = "Login with username and password")
-    @PostMapping("/login")
+    @Operation(summary = "Login with username and password (JSON)")
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Result<AuthenticationToken> login(@RequestBody @Valid LoginReq request) {
+        return doLogin(request);
+    }
+
+    @Operation(summary = "Login with username and password (Form)")
+    @PostMapping(value = "/login", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE})
+    public Result<AuthenticationToken> loginForm(@Valid LoginReq request) {
+        return doLogin(request);
+    }
+
+    private Result<AuthenticationToken> doLogin(LoginReq request) {
         // Captcha validation based on configuration
         boolean hasCaptcha = request.getCaptchaId() != null && request.getCaptchaCode() != null;
 
