@@ -5,20 +5,23 @@ import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerIntercept
 import com.smartdx.tenant.TenantProperties;
 import com.smartdx.tenant.aspect.TenantAspect;
 import com.smartdx.tenant.filter.TenantContextFilter;
+import com.smartdx.tenant.filter.TenantStatusFilter;
 import com.smartdx.tenant.mybatis.TenantLineHandler;
 import com.smartdx.tenant.resolver.HeaderTenantResolver;
+import com.smartdx.tenant.resolver.SecurityContextTenantResolver;
 import com.smartdx.tenant.resolver.TenantResolver;
+import com.smartdx.tenant.service.TenantStatusChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
 
 import java.util.List;
 
@@ -55,6 +58,36 @@ public class TenantAutoConfiguration {
         return new HeaderTenantResolver();
     }
 
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnClass(name = "com.smartdx.security.util.SecurityUtils")
+    public SecurityContextTenantResolver securityContextTenantResolver() {
+        log.info("Registered SecurityContextTenantResolver for JWT tenant resolution");
+        return new SecurityContextTenantResolver();
+    }
+
+    /**
+     * テナント状態チェックフィルター
+     * <p>
+     * TenantStatusCheckerが提供されている場合のみ有効。
+     * force-defaultモード時はチェックをスキップ。
+     * </p>
+     */
+    @Bean
+    public FilterRegistrationBean<TenantStatusFilter> tenantStatusFilter(
+            ObjectProvider<TenantStatusChecker> statusCheckerProvider,
+            TenantProperties tenantProperties) {
+        TenantStatusChecker statusChecker = statusCheckerProvider.getIfAvailable();
+        TenantStatusFilter filter = new TenantStatusFilter(statusChecker, tenantProperties);
+
+        FilterRegistrationBean<TenantStatusFilter> registration = new FilterRegistrationBean<>(filter);
+        // SecurityFilter の後に実行 (JWT → SecurityContext → tenant 解決の順)
+        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER + 20);
+        registration.addUrlPatterns("/*");
+        log.info("Registered TenantStatusFilter (statusChecker: {})", statusChecker != null ? "available" : "not available");
+        return registration;
+    }
+
     /**
      * テナントコンテキストフィルター
      */
@@ -66,7 +99,8 @@ public class TenantAutoConfiguration {
         TenantContextFilter filter = new TenantContextFilter(resolvers, tenantProperties);
 
         FilterRegistrationBean<TenantContextFilter> registration = new FilterRegistrationBean<>(filter);
-        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
+        // SecurityFilter の後に実行 (SecurityContextTenantResolver が JWT 由来の tenantId を解決できるように)
+        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER + 10);
         registration.addUrlPatterns("/*");
         log.info("Registered TenantContextFilter with {} resolvers", resolvers.size());
         return registration;

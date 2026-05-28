@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfig
 import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.data.redis.RedisReactiveHealthContributorAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.FullyQualifiedAnnotationBeanNameGenerator;
 import org.redisson.spring.starter.RedissonAutoConfigurationV2;
 
 /**
@@ -41,11 +42,14 @@ import org.redisson.spring.starter.RedissonAutoConfigurationV2;
                 RedissonAutoConfigurationV2.class
         }
 )
-@MapperScan({
-        "com.smartdx.property.mapper",
-        "com.smartdx.system.mapper",
-        "com.smartdx.retail.mapper"
-})
+@MapperScan(
+        basePackages = {
+                "com.smartdx.property.mapper",
+                "com.smartdx.system.mapper",
+                "com.smartdx.retail.mapper"
+        },
+        nameGenerator = FullyQualifiedAnnotationBeanNameGenerator.class
+)
 @EnableCaching
 public class SmartDxApplication {
 
