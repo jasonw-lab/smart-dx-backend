@@ -12,11 +12,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Dashboard Service Implementation
@@ -60,5 +63,50 @@ public class DashboardServiceImpl implements DashboardService {
         kpi.put("activeAlertCount", activeAlertCount);
 
         return kpi;
+    }
+
+    @Override
+    public List<Map<String, Object>> getSalesTrend(LocalDate startDate, LocalDate endDate) {
+        LocalDate end = endDate != null ? endDate : LocalDate.now();
+        LocalDate start = startDate != null ? startDate : end.minusDays(6);
+
+        LocalDateTime rangeStart = start.atStartOfDay();
+        LocalDateTime rangeEnd = end.plusDays(1).atStartOfDay();
+
+        LambdaQueryWrapper<Sales> salesQuery = new LambdaQueryWrapper<Sales>()
+                .ge(Sales::getSaleTimestamp, rangeStart)
+                .lt(Sales::getSaleTimestamp, rangeEnd);
+        List<Sales> salesList = salesMapper.selectList(salesQuery);
+
+        TreeMap<LocalDate, BigDecimal> dailyTotals = new TreeMap<>();
+        for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+            dailyTotals.put(d, BigDecimal.ZERO);
+        }
+        for (Sales sale : salesList) {
+            if (sale.getSaleTimestamp() == null || sale.getTotalAmount() == null) {
+                continue;
+            }
+            LocalDate day = sale.getSaleTimestamp().toLocalDate();
+            dailyTotals.merge(day, sale.getTotalAmount(), BigDecimal::add);
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>(dailyTotals.size());
+        BigDecimal prevAmount = null;
+        for (Map.Entry<LocalDate, BigDecimal> entry : dailyTotals.entrySet()) {
+            BigDecimal amount = entry.getValue();
+            BigDecimal growthRate = BigDecimal.ZERO;
+            if (prevAmount != null && prevAmount.compareTo(BigDecimal.ZERO) > 0) {
+                growthRate = amount.subtract(prevAmount)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(prevAmount, 2, RoundingMode.HALF_UP);
+            }
+            Map<String, Object> item = new HashMap<>();
+            item.put("date", entry.getKey().toString());
+            item.put("salesAmount", amount);
+            item.put("growthRate", growthRate);
+            result.add(item);
+            prevAmount = amount;
+        }
+        return result;
     }
 }

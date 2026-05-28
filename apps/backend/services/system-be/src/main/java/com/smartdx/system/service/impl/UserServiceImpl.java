@@ -136,6 +136,7 @@ public class UserServiceImpl implements UserService {
 
         CurrentUserDTO dto = new CurrentUserDTO();
         dto.setUserId(userDetails.getUserId());
+        dto.setTenantId(userDetails.getTenantId());
         dto.setUsername(userDetails.getUsername());
         dto.setNickname(userDetails.getNickname());
         dto.setCanSwitchTenant(userDetails.getCanSwitchTenant());

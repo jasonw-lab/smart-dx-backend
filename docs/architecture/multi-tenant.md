@@ -3,6 +3,12 @@
 ## 概要
 Smart DX Backend は行レベル分離型マルチテナントを採用。全サービスが共通の `libs/smart-be-tenant` を利用し、統一されたマルチテナント基盤として運用。
 
+## Tenant マスタの正本
+- **`sys_tenant` (system-be) が tenant マスタの唯一の正本**。retail-be 等のドメインモジュールは独自の tenant テーブルを持たない。
+- `TenantStatusChecker` (libs/smart-be-tenant) の実装は system-be (`SystemTenantStatusChecker`) のみが提供する。
+- retail-be は libs 経由 (`TenantStatusChecker` / `TenantContextHolder`) でのみ tenant 状態を参照する。system-be の Java クラスを直接 import してはならない。
+- retail-be は 1 テナント固定運用 (force-default モード、`sys_tenant` の default テナント `id=1` を参照)。
+
 ## アーキテクチャ
 
 ```
@@ -181,6 +187,7 @@ smart-be-tenant:
 ```
 
 ### retail-be (1テナント固定運用)
+`sys_tenant` の default テナント (id=1) を参照。retail-be は tenant マスタを自前で持たない。
 ```yaml
 smart-be-tenant:
   enabled: true

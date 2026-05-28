@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  * MinIOファイルサービス
  */
 @Slf4j
-@Service
+@Service("propertyMinioFileService")
 public class MinioFileService {
 
     @Value("${minio.endpoint:http://localhost:9000}")

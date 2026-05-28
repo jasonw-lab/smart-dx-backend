@@ -27,7 +27,7 @@ import java.time.LocalDateTime;
 /**
  * MinIO ファイルアップロードサービス
  */
-@Component
+@Component("systemMinioFileService")
 @ConditionalOnProperty(value = "oss.type", havingValue = "minio")
 @ConfigurationProperties(prefix = "oss.minio")
 @RequiredArgsConstructor

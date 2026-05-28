@@ -60,9 +60,10 @@ tenant:
   column: tenant_id
   default-tenant-id: 1
   # force-default: All requests processed with default tenant ID
-  # retail-be runs in single-tenant fixed operation mode
-  force-default: true
+  # Set to false to enable multi-tenant mode with X-Tenant-ID header
+  force-default: false
   ignore-tables:
+    - retail_sales_detail
     - flyway_schema_history_retail
 
 # Actuator
