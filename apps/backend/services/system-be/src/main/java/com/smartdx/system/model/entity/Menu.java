@@ -77,5 +77,6 @@ public class Menu {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
+    @TableField(exist = false)
     private Long tenantId;
 }
