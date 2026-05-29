@@ -75,6 +75,11 @@ tenant:
   ignore-tables:
     - sys_tenant
     - sys_config
+    - sys_menu
+    - sys_role_menu
+    - sys_tenant_menu
+    - sys_tenant_plan
+    - sys_tenant_plan_menu
     - gen_table
     - gen_table_column
     - retail_sales_detail

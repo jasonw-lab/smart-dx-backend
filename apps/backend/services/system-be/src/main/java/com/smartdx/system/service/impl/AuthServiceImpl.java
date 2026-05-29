@@ -5,6 +5,7 @@ import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.smartdx.system.captcha.CaptchaProperties;
+import com.smartdx.system.mapper.RoleMapper;
 import com.smartdx.system.mapper.UserMapper;
 import com.smartdx.system.model.entity.User;
 import com.smartdx.system.model.vo.CaptchaVO;
@@ -27,6 +28,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
     private final TokenManager tokenManager;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -84,8 +87,11 @@ public class AuthServiceImpl implements AuthService {
         userDetails.setTenantId(user.getTenantId());
         userDetails.setDeptId(user.getDeptId());
         userDetails.setCanSwitchTenant(user.getCanSwitchTenant());
-        userDetails.setRoleCodes(Collections.emptySet());
         userDetails.setStatus(user.getStatus());
+
+        // Fetch user's role codes from database
+        Set<String> roleCodes = roleMapper.selectRoleCodesByUserId(user.getId());
+        userDetails.setRoleCodes(roleCodes != null ? roleCodes : Collections.emptySet());
 
         // Create authentication
         Authentication authentication = new UsernamePasswordAuthenticationToken(

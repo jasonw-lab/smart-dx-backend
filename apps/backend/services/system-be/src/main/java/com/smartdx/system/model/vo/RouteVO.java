@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +15,10 @@ import java.util.Map;
 @Schema(description = "ルートVO")
 @Data
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class RouteVO {
+public class RouteVO implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Schema(description = "ルートパス")
     private String path;
@@ -34,7 +39,9 @@ public class RouteVO {
     private List<RouteVO> children;
 
     @Data
-    public static class Meta {
+    public static class Meta implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         @Schema(description = "タイトル")
         private String title;
