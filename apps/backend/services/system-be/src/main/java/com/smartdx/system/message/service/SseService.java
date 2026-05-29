@@ -17,7 +17,7 @@ import java.util.Map;
  * SSE サービス
  */
 @Slf4j
-@Service
+@Service("systemSseService")
 @RequiredArgsConstructor
 public class SseService {
 
