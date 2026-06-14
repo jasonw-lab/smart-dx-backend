@@ -95,7 +95,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Create authentication
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userDetails, null, Collections.emptyList());
+                userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Generate token
