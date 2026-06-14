@@ -17,7 +17,7 @@ spring:
   # Database (shared smart_dx_db for property/system, retail_db uses separate datasource)
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false&connectTimeout=5000&socketTimeout=15000
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
     type: com.alibaba.druid.pool.DruidDataSource
@@ -113,6 +113,7 @@ security:
     - /api/v1/auth/**
     - /api/v1/properties/search
     - /api/v1/properties/*/similar
+    - /api/v1/system/test-config  # E2Eテスト設定
     - /actuator/health
     - /actuator/health/**
     - /v3/api-docs/**
