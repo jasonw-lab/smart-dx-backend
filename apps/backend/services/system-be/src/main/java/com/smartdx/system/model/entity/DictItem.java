@@ -39,8 +39,5 @@ public class DictItem {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
-    @TableLogic
-    private Integer isDeleted;
-
     private Long tenantId;
 }
