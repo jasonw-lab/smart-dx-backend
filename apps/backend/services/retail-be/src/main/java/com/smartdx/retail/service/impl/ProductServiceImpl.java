@@ -21,6 +21,7 @@ import com.smartdx.retail.model.query.ProductPageQuery;
 import com.smartdx.retail.model.vo.ProductPageVO;
 import com.smartdx.retail.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 /**
  * Product Service Implementation
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> implements ProductService {
@@ -74,7 +76,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     }
 
     @Override
+    @Transactional(timeout = 15)
     public boolean createProduct(ProductForm form) {
+        log.info("Creating product. code={}", form.getCode());
+
         // Check duplicate product code
         LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<Product>()
                 .eq(Product::getProductCode, form.getCode());
@@ -85,14 +90,20 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
 
         Product product = productConverter.form2Entity(form);
-        return this.save(product);
+        boolean saved = this.save(product);
+        log.info("Created product. code={}, id={}", product.getProductCode(), product.getId());
+        return saved;
     }
 
     @Override
+    @Transactional(timeout = 15)
     public boolean updateProduct(Long id, ProductForm form) {
+        log.info("Updating product. id={}, code={}", id, form.getCode());
         Product product = productConverter.form2Entity(form);
         product.setId(id);
-        return this.updateById(product);
+        boolean updated = this.updateById(product);
+        log.info("Updated product. id={}, code={}, updated={}", id, product.getProductCode(), updated);
+        return updated;
     }
 
     @Override
