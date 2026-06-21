@@ -1,6 +1,7 @@
 package com.smartdx.retail.service;
 
 import com.smartdx.retail.model.entity.Inventory;
+import com.smartdx.retail.model.vo.InventoryPageVO;
 
 import java.util.List;
 
@@ -9,9 +10,9 @@ import java.util.List;
  */
 public interface InventoryService {
 
-    List<Inventory> listInventories(Long storeId, Long productId);
+    List<InventoryPageVO> listInventories(Long storeId, Long productId);
 
-    Inventory getInventoryById(Long id);
+    InventoryPageVO getInventoryById(Long id);
 
     boolean createInventory(Inventory inventory);
 
