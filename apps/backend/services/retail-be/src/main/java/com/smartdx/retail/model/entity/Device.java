@@ -50,6 +50,12 @@ public class Device implements Serializable {
      */
     private String metadata;
 
+    /**
+     * 店舗名（非永続、表示用）
+     */
+    @TableField(exist = false)
+    private String storeName;
+
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
