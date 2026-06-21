@@ -163,6 +163,20 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM pins Testcontainers to an older version that does not support newer Docker engines (API 1.40+).
+                 Override to the version declared in the parent POM so E2E tests can run on current Docker daemons. -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>

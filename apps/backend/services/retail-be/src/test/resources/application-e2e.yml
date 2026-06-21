@@ -13,7 +13,10 @@ spring:
     password: ${E2E_MYSQL_PASSWORD:test123}
 
   flyway:
-    enabled: false
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration/retail
+    table: flyway_schema_history_retail
 
   data:
     redis:
