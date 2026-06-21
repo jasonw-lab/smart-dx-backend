@@ -10,29 +10,46 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 /**
  * Base class for retail domain E2E tests backed by Testcontainers.
+ * <p>
+ * Containers are managed as singletons (started once per JVM) so that the Spring
+ * application context can be safely cached across test classes. If each class
+ * started/stopped its own containers, the cached DataSource would point at a
+ * port that no longer exists after the first class finishes.
+ * </p>
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         classes = com.smartdx.retail.RetailTestApplication.class
 )
 @ActiveProfiles("e2e")
-@Testcontainers
 public abstract class RetailE2EBase {
 
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
-            .withDatabaseName("smart_dx_db")
-            .withUsername("root")
-            .withPassword("test123");
+    static final MySQLContainer<?> mysql;
+    static final RedisContainer redis;
 
-    @Container
-    static RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:7-alpine"));
+    static {
+        mysql = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
+                .withDatabaseName("smart_dx_db")
+                .withUsername("root")
+                .withPassword("test123");
+        mysql.start();
+
+        redis = new RedisContainer(DockerImageName.parse("redis:7-alpine"));
+        redis.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (redis.isRunning()) {
+                redis.stop();
+            }
+            if (mysql.isRunning()) {
+                mysql.stop();
+            }
+        }));
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
