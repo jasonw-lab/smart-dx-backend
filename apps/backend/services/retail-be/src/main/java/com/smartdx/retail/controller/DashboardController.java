@@ -1,7 +1,7 @@
 package com.smartdx.retail.controller;
 
 import com.smartdx.core.result.Result;
-import com.smartdx.retail.model.entity.Alert;
+import com.smartdx.retail.model.vo.AlertPageVO;
 import com.smartdx.retail.service.AlertService;
 import com.smartdx.retail.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,8 +41,8 @@ public class DashboardController {
 
     @Operation(summary = "Get recent alerts for dashboard")
     @GetMapping("/alerts")
-    public Result<List<Alert>> getAlerts(@RequestParam(required = false) Integer limit) {
-        List<Alert> alerts = alertService.listAlerts(null, null);
+    public Result<List<AlertPageVO>> getAlerts(@RequestParam(required = false) Integer limit) {
+        List<AlertPageVO> alerts = alertService.listAlerts(null, null);
         if (limit != null && limit > 0 && alerts.size() > limit) {
             alerts = alerts.subList(0, limit);
         }
