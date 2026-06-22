@@ -2,6 +2,7 @@ package com.smartdx.retail.controller;
 
 import com.smartdx.core.result.Result;
 import com.smartdx.retail.model.entity.Alert;
+import com.smartdx.retail.model.vo.AlertPageVO;
 import com.smartdx.retail.service.AlertService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,7 +28,7 @@ public class AlertController {
 
     @Operation(summary = "Get alerts")
     @GetMapping
-    public Result<List<Alert>> listAlerts(
+    public Result<List<AlertPageVO>> listAlerts(
             @RequestParam(required = false) Long storeId,
             @RequestParam(required = false) String status) {
         return Result.success(alertService.listAlerts(storeId, status));
@@ -35,7 +36,7 @@ public class AlertController {
 
     @Operation(summary = "Get alert by ID")
     @GetMapping("/{id}")
-    public Result<Alert> getAlert(@PathVariable Long id) {
+    public Result<AlertPageVO> getAlert(@PathVariable Long id) {
         return Result.success(alertService.getAlertById(id));
     }
 

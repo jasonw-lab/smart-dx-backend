@@ -1,6 +1,6 @@
 package com.smartdx.retail.service;
 
-import com.smartdx.retail.model.entity.Alert;
+import com.smartdx.retail.model.vo.AlertPageVO;
 
 import java.util.List;
 
@@ -9,11 +9,11 @@ import java.util.List;
  */
 public interface AlertService {
 
-    List<Alert> listAlerts(Long storeId, String status);
+    List<AlertPageVO> listAlerts(Long storeId, String status);
 
-    Alert getAlertById(Long id);
+    AlertPageVO getAlertById(Long id);
 
-    boolean createAlert(Alert alert);
+    boolean createAlert(com.smartdx.retail.model.entity.Alert alert);
 
     boolean updateAlertStatus(Long id, String status, String resolutionNote);
 
