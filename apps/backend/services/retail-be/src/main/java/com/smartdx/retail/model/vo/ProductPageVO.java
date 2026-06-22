@@ -69,4 +69,10 @@ public class ProductPageVO {
 
     @Schema(description = "Max stock")
     private Integer maxStock;
+
+    @Schema(description = "Total stock quantity across all stores/lots")
+    private Integer stock;
+
+    @Schema(description = "Total sales quantity")
+    private Integer sales;
 }

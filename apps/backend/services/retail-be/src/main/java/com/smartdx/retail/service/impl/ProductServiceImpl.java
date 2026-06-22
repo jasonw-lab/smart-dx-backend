@@ -26,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +61,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         List<ProductPageVO> list = result.getRecords().stream()
                 .map(productConverter::entity2Vo)
                 .collect(Collectors.toList());
+
+        populateStockAndSales(list);
 
         return PageResult.success(list, result.getTotal());
     }
@@ -130,5 +134,38 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         alertMapper.delete(alertWrapper);
 
         return this.removeById(id);
+    }
+
+    private void populateStockAndSales(List<ProductPageVO> productList) {
+        if (productList.isEmpty()) {
+            return;
+        }
+
+        List<Long> productIds = productList.stream()
+                .map(ProductPageVO::getId)
+                .collect(Collectors.toList());
+
+        // 在庫数合計
+        LambdaQueryWrapper<Inventory> inventoryWrapper = new LambdaQueryWrapper<Inventory>()
+                .in(Inventory::getProductId, productIds);
+        Map<Long, Integer> stockMap = inventoryMapper.selectList(inventoryWrapper).stream()
+                .collect(Collectors.groupingBy(
+                        Inventory::getProductId,
+                        Collectors.summingInt(inv -> inv.getQuantity() != null ? inv.getQuantity() : 0)
+                ));
+
+        // 売上数合計
+        LambdaQueryWrapper<SalesDetail> salesDetailWrapper = new LambdaQueryWrapper<SalesDetail>()
+                .in(SalesDetail::getProductId, productIds);
+        Map<Long, Integer> salesMap = salesDetailMapper.selectList(salesDetailWrapper).stream()
+                .collect(Collectors.groupingBy(
+                        SalesDetail::getProductId,
+                        Collectors.summingInt(detail -> detail.getQuantity() != null ? detail.getQuantity() : 0)
+                ));
+
+        for (ProductPageVO vo : productList) {
+            vo.setStock(stockMap.getOrDefault(vo.getId(), 0));
+            vo.setSales(salesMap.getOrDefault(vo.getId(), 0));
+        }
     }
 }

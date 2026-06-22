@@ -2,9 +2,11 @@ package com.smartdx.retail.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.smartdx.retail.mapper.AlertMapper;
+import com.smartdx.retail.mapper.InventoryMapper;
 import com.smartdx.retail.mapper.SalesMapper;
 import com.smartdx.retail.mapper.StoreMapper;
 import com.smartdx.retail.model.entity.Alert;
+import com.smartdx.retail.model.entity.Inventory;
 import com.smartdx.retail.model.entity.Sales;
 import com.smartdx.retail.model.entity.Store;
 import com.smartdx.retail.service.DashboardService;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * Dashboard Service Implementation
@@ -31,36 +34,46 @@ public class DashboardServiceImpl implements DashboardService {
     private final SalesMapper salesMapper;
     private final StoreMapper storeMapper;
     private final AlertMapper alertMapper;
+    private final InventoryMapper inventoryMapper;
 
     @Override
     public Map<String, Object> getKpi() {
         Map<String, Object> kpi = new HashMap<>();
 
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+
         // Today's sales
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = startOfDay.plusDays(1);
-        LambdaQueryWrapper<Sales> salesQuery = new LambdaQueryWrapper<Sales>()
-                .ge(Sales::getSaleTimestamp, startOfDay)
-                .lt(Sales::getSaleTimestamp, endOfDay);
-        List<Sales> todaySales = salesMapper.selectList(salesQuery);
-        BigDecimal todaySalesTotal = todaySales.stream()
-                .map(Sales::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal todaySalesTotal = sumSalesByDate(today);
         kpi.put("todaySales", todaySalesTotal);
+
+        // Sales growth rate vs yesterday
+        BigDecimal yesterdaySalesTotal = sumSalesByDate(yesterday);
+        BigDecimal salesGrowthRate = BigDecimal.ZERO;
+        if (yesterdaySalesTotal.compareTo(BigDecimal.ZERO) > 0) {
+            salesGrowthRate = todaySalesTotal.subtract(yesterdaySalesTotal)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(yesterdaySalesTotal, 2, RoundingMode.HALF_UP);
+        }
+        kpi.put("salesGrowthRate", salesGrowthRate);
 
         // Store counts
         LambdaQueryWrapper<Store> onlineQuery = new LambdaQueryWrapper<Store>()
                 .eq(Store::getStatus, "ONLINE");
-        Long onlineStoreCount = storeMapper.selectCount(onlineQuery);
+        Long activeStoreCount = storeMapper.selectCount(onlineQuery);
         Long totalStoreCount = storeMapper.selectCount(null);
-        kpi.put("onlineStoreCount", onlineStoreCount);
+        kpi.put("activeStoreCount", activeStoreCount);
         kpi.put("totalStoreCount", totalStoreCount);
 
-        // Active alerts
+        // Pending alerts
         LambdaQueryWrapper<Alert> alertQuery = new LambdaQueryWrapper<Alert>()
                 .in(Alert::getStatus, "NEW", "ACK", "IN_PROGRESS");
-        Long activeAlertCount = alertMapper.selectCount(alertQuery);
-        kpi.put("activeAlertCount", activeAlertCount);
+        Long pendingAlertCount = alertMapper.selectCount(alertQuery);
+        kpi.put("pendingAlertCount", pendingAlertCount);
+
+        // Out of stock SKU count
+        long outOfStockSkuCount = countOutOfStockSkus();
+        kpi.put("outOfStockSkuCount", outOfStockSkuCount);
 
         return kpi;
     }
@@ -108,5 +121,32 @@ public class DashboardServiceImpl implements DashboardService {
             prevAmount = amount;
         }
         return result;
+    }
+
+    private BigDecimal sumSalesByDate(LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        LambdaQueryWrapper<Sales> salesQuery = new LambdaQueryWrapper<Sales>()
+                .ge(Sales::getSaleTimestamp, startOfDay)
+                .lt(Sales::getSaleTimestamp, endOfDay);
+        List<Sales> salesList = salesMapper.selectList(salesQuery);
+        return salesList.stream()
+                .map(Sales::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private long countOutOfStockSkus() {
+        LambdaQueryWrapper<Inventory> inventoryQuery = new LambdaQueryWrapper<Inventory>();
+        List<Inventory> inventories = inventoryMapper.selectList(inventoryQuery);
+
+        Map<Long, Integer> productStock = inventories.stream()
+                .collect(Collectors.groupingBy(
+                        Inventory::getProductId,
+                        Collectors.summingInt(inv -> inv.getQuantity() != null ? inv.getQuantity() : 0)
+                ));
+
+        return productStock.values().stream()
+                .filter(quantity -> quantity <= 0)
+                .count();
     }
 }
