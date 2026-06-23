@@ -693,9 +693,18 @@ public class PropertyEsSearchServiceImpl implements PropertyEsSearchService {
 
         Map<String, Object> mainImage = asMap(source.get("mainImage"));
         if (mainImage != null) {
-            // Use original image (s3Path) instead of small thumbnail for better resolution
-            String imageKey = getString(mainImage, "s3Path");
-            vo.setThumbnailUrl(resolveAssetUrl(imageKey));
+            String s3Path = getString(mainImage, "s3Path");
+            String thumbnailSmKey = getString(mainImage, "thumbnailSmKey");
+            String thumbnailLgKey = getString(mainImage, "thumbnailLgKey");
+            vo.setThumbnailUrl(resolveAssetUrl(s3Path));
+            vo.setPreviewSm(resolveAssetUrl(thumbnailSmKey));
+            vo.setPreviewLg(resolveAssetUrl(thumbnailLgKey));
+            if (vo.getThumbnailUrl() == null) {
+                log.warn("PropertySummary thumbnailUrl is null: propertyKey={}, mainImage={}",
+                        vo.getPropertyKey(), mainImage);
+            }
+        } else {
+            log.warn("PropertySummary mainImage is missing: propertyKey={}", vo.getPropertyKey());
         }
 
         vo.setDraftSuggested(false);
@@ -725,7 +734,7 @@ public class PropertyEsSearchServiceImpl implements PropertyEsSearchService {
 
     private String resolveAssetUrl(String objectKey) {
         if (StrUtil.isBlank(objectKey)) {
-            log.warn("resolveAssetUrl: objectKey is blank");
+            log.debug("resolveAssetUrl: objectKey is blank");
             return null;
         }
         MinioFileService minio = minioFileServiceProvider.getIfAvailable();

@@ -44,6 +44,10 @@ public class PropertySummaryVO {
 
     private String thumbnailUrl;
 
+    private String previewSm;
+
+    private String previewLg;
+
     private Boolean draftSuggested;
 
     /**
