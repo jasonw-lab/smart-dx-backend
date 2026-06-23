@@ -12,9 +12,13 @@ import com.smartdx.retail.ai.model.vo.AlertAssistantVO;
 import com.smartdx.retail.ai.service.AlertAssistantService;
 import com.smartdx.retail.model.vo.AlertPageVO;
 import com.smartdx.retail.service.AlertService;
+import com.smartdx.security.model.UserDetails;
+import com.smartdx.tenant.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -50,6 +54,8 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
     @Override
     public AlertAssistantVO answerPriorityAlerts(AlertAssistantReq request) {
         if (request == null || !EXPECTED_MESSAGE.equals(request.getMessage())) {
+            log.warn("[AI_ALERT_AUDIT] Invalid assistant request: message={}",
+                    request == null ? "null" : request.getMessage());
             throw new IllegalArgumentException("Unsupported message. Only \"" + EXPECTED_MESSAGE + "\" is accepted.");
         }
 
@@ -67,9 +73,10 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
                 vo.setLlmUsed(true);
                 vo.setLlmModel(resolveModelName(response, llmClient));
                 vo.setFallback(false);
+                auditLog(vo, response.getLatencyMs(), null);
                 return vo;
             } catch (Exception e) {
-                log.warn("LLM call failed, falling back to rule-based summary", e);
+                log.warn("[AI_ALERT_AUDIT] LLM call failed, falling back to rule-based summary", e);
             }
         }
 
@@ -79,6 +86,7 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
         vo.setLlmUsed(false);
         vo.setLlmModel(null);
         vo.setFallback(true);
+        auditLog(vo, 0L, "LLM unavailable or failed");
         return vo;
     }
 
@@ -91,13 +99,13 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
                 .userPrompt(userPrompt)
                 .maxOutputTokens(800)
                 .temperature(0.2)
-                .timeoutMs(5000)
+                .timeoutMs(alertAssistantConfig.getLlm().getTimeoutMs())
                 .build();
 
         LlmResponse response = llmClient.complete(llmRequest);
         String content = response.getContent();
         if (content == null || content.isBlank()) {
-            response.setContent(buildFallbackSummary(alerts));
+            throw new LlmException(LlmException.LlmErrorCode.INVALID_RESPONSE, "Gemini returned empty content");
         }
         return response;
     }
@@ -152,5 +160,27 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
 
         sb.append("最優先の対応：P1 アラートから順に対応してください。");
         return sb.toString();
+    }
+
+    private void auditLog(AlertAssistantVO vo, long latencyMs, String errorReason) {
+        Long tenantId = TenantContextHolder.getTenantId();
+        Long userId = null;
+        String username = "anonymous";
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null) {
+                username = authentication.getName();
+                Object principal = authentication.getPrincipal();
+                if (principal instanceof UserDetails userDetails) {
+                    userId = userDetails.getUserId();
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to resolve audit user context", e);
+        }
+
+        log.info("[AI_ALERT_AUDIT] tenantId={} userId={} username={} question={} alertCount={} llmUsed={} llmModel={} fallback={} latencyMs={} errorReason={}",
+                tenantId, userId, username, EXPECTED_MESSAGE, vo.getAlerts().size(),
+                vo.isLlmUsed(), vo.getLlmModel(), vo.isFallback(), latencyMs, errorReason);
     }
 }

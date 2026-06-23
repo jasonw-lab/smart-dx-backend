@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * @author jason.w
  */
 @Configuration
-@ConfigurationProperties(prefix = "retail.ai.llm")
+@ConfigurationProperties(prefix = "retail.ai")
 @Getter
 @Setter
 public class AlertAssistantConfig {
