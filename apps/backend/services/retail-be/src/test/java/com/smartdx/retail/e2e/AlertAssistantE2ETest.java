@@ -1,33 +1,54 @@
 package com.smartdx.retail.e2e;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.smartdx.core.result.Result;
 import com.smartdx.retail.ai.model.req.AlertAssistantReq;
-import com.smartdx.retail.ai.model.vo.AlertAssistantVO;
+import com.smartdx.retail.config.TestSecurityConfig;
+import com.smartdx.security.model.UserDetails;
+import com.smartdx.security.token.TokenManager;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.Set;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 /**
  * E2E tests for the AI alert priority assistant endpoint.
  */
+@Import(TestSecurityConfig.class)
 class AlertAssistantE2ETest extends RetailE2EBase {
 
     private static final String ENDPOINT = "/api/v1/retail/ai/alerts/priority";
     private static final String VALID_MESSAGE = "今日対応すべき優先アラートは？";
+    private static final long E2E_USER_ID = 900001L;
+    private static final long E2E_TENANT_ID = 1L;
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private TokenManager tokenManager;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @LocalServerPort
+    private int port;
+
+    private String bearerToken;
+
+    @BeforeEach
+    void setUp() {
+        RestAssured.port = port;
+        bearerToken = "Bearer " + createAccessToken();
+    }
 
     @Test
-    void priority_withValidMessage_returnsFallbackSummaryAndAlerts() throws Exception {
+    void priority_withValidMessage_returnsFallbackSummaryAndAlerts() {
         // Given
         Long storeId = seedStore("S-AI-001", "AIアシスタント店", "ONLINE");
         Long categoryId = seedCategory("CAT-AI-001", "AIカテゴリ");
@@ -41,23 +62,23 @@ class AlertAssistantE2ETest extends RetailE2EBase {
         AlertAssistantReq req = new AlertAssistantReq();
         req.setMessage(VALID_MESSAGE);
 
-        // When
-        ResponseEntity<Result> response = restTemplate.postForEntity(ENDPOINT, req, Result.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Result result = response.getBody();
-        assertThat(result).isNotNull();
-        assertThat(result.getCode()).isEqualTo("00000");
-
-        AlertAssistantVO vo = objectMapper.convertValue(result.getData(), AlertAssistantVO.class);
-        assertThat(vo).isNotNull();
-        assertThat(vo.isFallback()).isTrue();
-        assertThat(vo.isLlmUsed()).isFalse();
-        assertThat(vo.getAlerts()).hasSize(3);
-        assertThat(vo.getSummary()).contains("本日の未解決アラートは計 3 件です。");
-        assertThat(vo.getSummary()).contains("P1");
-        assertThat(vo.getSummary()).contains("最優先の対応：P1 アラートから順に対応してください。");
+        // When / Then
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", bearerToken)
+                .body(req)
+                .when()
+                .post(ENDPOINT)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .body("code", equalTo("00000"))
+                .body("data.fallback", equalTo(true))
+                .body("data.llmUsed", equalTo(false))
+                .body("data.alerts", hasSize(3))
+                .body("data.summary", containsString("本日の未解決アラートは計 3 件です。"))
+                .body("data.summary", containsString("P1"))
+                .body("data.summary", containsString("最優先の対応：P1 アラートから順に対応してください。"));
     }
 
     @Test
@@ -66,35 +87,73 @@ class AlertAssistantE2ETest extends RetailE2EBase {
         AlertAssistantReq req = new AlertAssistantReq();
         req.setMessage("別の質問");
 
-        // When
-        ResponseEntity<Result> response = restTemplate.postForEntity(ENDPOINT, req, Result.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        Result result = response.getBody();
-        assertThat(result).isNotNull();
-        assertThat(result.getCode()).isEqualTo("A0400");
+        // When / Then
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", bearerToken)
+                .body(req)
+                .when()
+                .post(ENDPOINT)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(400)
+                .body("code", equalTo("A0400"));
     }
 
     @Test
-    void priority_withNoAlerts_returnsEmptyFallbackSummary() throws Exception {
+    void priority_withNoAlerts_returnsEmptyFallbackSummary() {
         // Given
         AlertAssistantReq req = new AlertAssistantReq();
         req.setMessage(VALID_MESSAGE);
 
-        // When
-        ResponseEntity<Result> response = restTemplate.postForEntity(ENDPOINT, req, Result.class);
+        // When / Then
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", bearerToken)
+                .body(req)
+                .when()
+                .post(ENDPOINT)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .body("code", equalTo("00000"))
+                .body("data.fallback", equalTo(true))
+                .body("data.llmUsed", equalTo(false))
+                .body("data.alerts", hasSize(0))
+                .body("data.summary", containsString("本日の未解決アラートは計 0 件です。"));
+    }
 
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Result result = response.getBody();
-        assertThat(result).isNotNull();
-        assertThat(result.getCode()).isEqualTo("00000");
+    @Test
+    void priority_withoutAuth_returns401() {
+        AlertAssistantReq req = new AlertAssistantReq();
+        req.setMessage(VALID_MESSAGE);
 
-        AlertAssistantVO vo = objectMapper.convertValue(result.getData(), AlertAssistantVO.class);
-        assertThat(vo).isNotNull();
-        assertThat(vo.isFallback()).isTrue();
-        assertThat(vo.getAlerts()).isEmpty();
-        assertThat(vo.getSummary()).contains("本日の未解決アラートは計 0 件です。");
+        given()
+                .contentType(ContentType.JSON)
+                .body(req)
+                .when()
+                .post(ENDPOINT)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(401);
+    }
+
+    private String createAccessToken() {
+        UserDetails userDetails = new UserDetails();
+        userDetails.setUserId(E2E_USER_ID);
+        userDetails.setDeptId(1L);
+        userDetails.setTenantId(E2E_TENANT_ID);
+        userDetails.setUsername("alert-assistant-e2e");
+        userDetails.setNickname("Alert Assistant E2E");
+        userDetails.setStatus(1);
+        userDetails.setCanSwitchTenant(false);
+        userDetails.setRoleCodes(Set.of("USER"));
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                "",
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        return tokenManager.generateToken(authentication).getAccessToken();
     }
 }

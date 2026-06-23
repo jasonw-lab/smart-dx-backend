@@ -8,6 +8,8 @@ import com.smartdx.retail.ai.service.AlertAssistantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,11 +30,12 @@ public class AlertAssistantController {
 
     @Operation(summary = "Get today's priority alerts with AI summary")
     @PostMapping("/priority")
-    public Result<AlertAssistantVO> priority(@RequestBody AlertAssistantReq request) {
+    public ResponseEntity<Result<AlertAssistantVO>> priority(@RequestBody AlertAssistantReq request) {
         try {
-            return Result.success(alertAssistantService.answerPriorityAlerts(request));
+            return ResponseEntity.ok(Result.success(alertAssistantService.answerPriorityAlerts(request)));
         } catch (IllegalArgumentException e) {
-            return Result.failed(ResultCode.USER_REQUEST_PARAMETER_ERROR, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Result.failed(ResultCode.USER_REQUEST_PARAMETER_ERROR, e.getMessage()));
         }
     }
 }
