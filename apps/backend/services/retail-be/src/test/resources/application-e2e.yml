@@ -62,14 +62,12 @@ security:
     - /v3/api-docs/**
     - /swagger-ui/**
     - /doc.html
-    - /api/v1/retail/ai/alerts/priority
   unsecured-urls:
     - /api/v1/auth/**
     - /actuator/**
     - /v3/api-docs/**
     - /swagger-ui/**
     - /doc.html
-    - /api/v1/retail/ai/alerts/priority
 
 captcha:
   required: false
