@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,9 +35,16 @@ public class GeminiLlmClient implements LlmClient {
 
     public GeminiLlmClient(AlertAssistantConfig alertAssistantConfig, ObjectMapper objectMapper) {
         this.alertAssistantConfig = alertAssistantConfig;
-        this.restTemplate = new RestTemplate();
         this.objectMapper = objectMapper;
-        log.info("GeminiLlmClient initialized with model: {}", alertAssistantConfig.getLlm().getModel());
+
+        long timeoutMs = alertAssistantConfig.getLlm().getTimeoutMs();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout((int) timeoutMs);
+        requestFactory.setReadTimeout((int) timeoutMs);
+        this.restTemplate = new RestTemplate(requestFactory);
+
+        log.info("GeminiLlmClient initialized with model: {}, timeoutMs: {}",
+                alertAssistantConfig.getLlm().getModel(), timeoutMs);
     }
 
     @Override

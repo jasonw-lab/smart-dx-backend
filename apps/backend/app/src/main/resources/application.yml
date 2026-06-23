@@ -191,6 +191,7 @@ springdoc:
     - com.smartdx.property.controller
     - com.smartdx.system.controller
     - com.smartdx.retail.controller
+    - com.smartdx.retail.ai.controller
 
 knife4j:
   enable: true

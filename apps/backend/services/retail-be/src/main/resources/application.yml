@@ -91,7 +91,9 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
-  packages-to-scan: com.smartdx.retail.controller
+  packages-to-scan:
+    - com.smartdx.retail.controller
+    - com.smartdx.retail.ai.controller
 
 knife4j:
   enable: true
