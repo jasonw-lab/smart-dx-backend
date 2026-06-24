@@ -31,10 +31,10 @@ public class AlertAssistantConfig {
         private boolean enabled = true;
 
         /**
-         * Provider: local, openai, anthropic, gemini, mock.
-         * <p>Default is {@code local} so the assistant works without an external API key.</p>
+         * Provider: gemini, openai, anthropic, local, mock.
+         * <p>Default is {@code gemini}. Falls back to local when the LLM is unavailable.</p>
          */
-        private String provider = "local";
+        private String provider = "gemini";
 
         /**
          * API key.
