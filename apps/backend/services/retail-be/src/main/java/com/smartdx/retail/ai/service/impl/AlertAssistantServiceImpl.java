@@ -63,8 +63,12 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
 
         LlmClient llmClient = llmClientProvider.getIfAvailable();
         boolean llmEnabled = alertAssistantConfig.getLlm().isEnabled();
+        boolean llmAvailable = llmClient != null && llmClient.isAvailable();
+        log.debug("[AI_ALERT_AUDIT] llmEnabled={} llmClient={} llmAvailable={} apiKeyPresent={}",
+                llmEnabled, llmClient != null, llmAvailable,
+                alertAssistantConfig.getLlm().getApiKey() != null && !alertAssistantConfig.getLlm().getApiKey().isBlank());
 
-        if (llmEnabled && llmClient != null && llmClient.isAvailable()) {
+        if (llmEnabled && llmAvailable) {
             try {
                 LlmResponse response = callLlm(llmClient, alerts);
                 AlertAssistantVO vo = new AlertAssistantVO();
