@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author jason.w
  */
-@Component
+@Component("retailGeminiLlmClient")
 @ConditionalOnProperty(name = "retail.ai.llm.provider", havingValue = "gemini")
 @Slf4j
 public class GeminiLlmClient implements LlmClient {
