@@ -104,7 +104,7 @@ retail:
   ai:
     llm:
       enabled: ${RETAIL_AI_LLM_ENABLED:true}
-      provider: ${RETAIL_AI_LLM_PROVIDER:gemini}
+      provider: ${RETAIL_AI_LLM_PROVIDER:local}
       api-key: ${GOOGLE_AI_API_KEY:}
-      model: ${RETAIL_AI_LLM_MODEL:gemini-2.0-flash-001}
+      model: ${RETAIL_AI_LLM_MODEL:smartdx-local}
       timeout-ms: ${RETAIL_AI_LLM_TIMEOUT_MS:5000}

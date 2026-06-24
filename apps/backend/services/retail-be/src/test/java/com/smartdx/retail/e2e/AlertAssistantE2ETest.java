@@ -48,7 +48,7 @@ class AlertAssistantE2ETest extends RetailE2EBase {
     }
 
     @Test
-    void priority_withValidMessage_returnsFallbackSummaryAndAlerts() {
+    void priority_withValidMessage_returnsLocalSummaryAndAlerts() {
         // Given
         Long storeId = seedStore("S-AI-001", "AIアシスタント店", "ONLINE");
         Long categoryId = seedCategory("CAT-AI-001", "AIカテゴリ");
@@ -73,10 +73,11 @@ class AlertAssistantE2ETest extends RetailE2EBase {
                 .log().ifValidationFails()
                 .statusCode(200)
                 .body("code", equalTo("00000"))
-                .body("data.fallback", equalTo(true))
-                .body("data.llmUsed", equalTo(false))
+                .body("data.fallback", equalTo(false))
+                .body("data.llmUsed", equalTo(true))
+                .body("data.llmModel", equalTo("smartdx-local"))
                 .body("data.alerts", hasSize(3))
-                .body("data.summary", containsString("本日の未解決アラートは計 3 件です。"))
+                .body("data.summary", containsString("本日対応すべき優先アラートは計 3 件です。"))
                 .body("data.summary", containsString("P1"))
                 .body("data.summary", containsString("最優先の対応：P1 アラートから順に対応してください。"));
     }
@@ -101,7 +102,7 @@ class AlertAssistantE2ETest extends RetailE2EBase {
     }
 
     @Test
-    void priority_withNoAlerts_returnsEmptyFallbackSummary() {
+    void priority_withNoAlerts_returnsEmptyLocalSummary() {
         // Given
         AlertAssistantReq req = new AlertAssistantReq();
         req.setMessage(VALID_MESSAGE);
@@ -117,10 +118,11 @@ class AlertAssistantE2ETest extends RetailE2EBase {
                 .log().ifValidationFails()
                 .statusCode(200)
                 .body("code", equalTo("00000"))
-                .body("data.fallback", equalTo(true))
-                .body("data.llmUsed", equalTo(false))
+                .body("data.fallback", equalTo(false))
+                .body("data.llmUsed", equalTo(true))
+                .body("data.llmModel", equalTo("smartdx-local"))
                 .body("data.alerts", hasSize(0))
-                .body("data.summary", containsString("本日の未解決アラートは計 0 件です。"));
+                .body("data.summary", containsString("本日対応すべき未解決アラートはありません。"));
     }
 
     @Test

@@ -124,7 +124,7 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
     private String buildFallbackSummary(List<AlertPageVO> alerts) {
         int total = alerts.size();
         if (total == 0) {
-            return "Gemini 利用不可のため、ルールベースで表示しています。\n本日の未解決アラートは計 0 件です。\n対応すべきアラートはありません。";
+            return "本日の未解決アラートは計 0 件です。\n対応すべきアラートはありません。";
         }
 
         Map<String, Long> countByPriority = alerts.stream()
@@ -143,7 +143,6 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Gemini 利用不可のため、ルールベースで表示しています。\n");
         sb.append("本日の未解決アラートは計 ").append(total).append(" 件です。\n");
 
         for (Map.Entry<String, Long> entry : countByPriority.entrySet()) {

@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -48,10 +47,9 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
 
     @Override
     public List<AlertPageVO> listTodayAlerts() {
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        // デモ環境では検知日が古いデータも含め、未解決アラートを優先度順に返す
         QueryWrapper<Alert> queryWrapper = new QueryWrapper<Alert>()
                 .notIn("status", "RESOLVED", "CLOSED")
-                .ge("detected_at", todayStart)
                 .orderByAsc("FIELD(priority,'P1','P2','P3','P4')")
                 .orderByDesc("detected_at");
         List<Alert> alerts = this.list(queryWrapper);
