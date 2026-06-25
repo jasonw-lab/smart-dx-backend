@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * @author jason.w
  */
 @Component
-@ConditionalOnProperty(name = "retail.ai.llm.provider", havingValue = "local", matchIfMissing = true)
+@ConditionalOnProperty(name = "retail.ai.llm.provider", havingValue = "local")
 @Slf4j
 public class LocalLlmClient implements LlmClient {
 

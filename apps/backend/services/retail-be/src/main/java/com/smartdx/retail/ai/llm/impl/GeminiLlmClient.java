@@ -23,7 +23,6 @@ import java.util.concurrent.CompletableFuture;
  * @author jason.w
  */
 @Component("retailGeminiLlmClient")
-@ConditionalOnProperty(name = "retail.ai.llm.provider", havingValue = "gemini")
 @Slf4j
 public class GeminiLlmClient implements LlmClient {
 
@@ -52,15 +51,15 @@ public class GeminiLlmClient implements LlmClient {
         long startTime = System.currentTimeMillis();
 
         try {
-            String apiKey = alertAssistantConfig.getLlm().getApiKey();
-            String model = alertAssistantConfig.getLlm().getModel();
+            AlertAssistantConfig.ProviderConfig providerConfig = alertAssistantConfig.getLlm().getProvider("gemini");
+            String apiKey = providerConfig.getApiKey();
+            String model = providerConfig.getModel();
 
             if (apiKey == null || apiKey.isBlank()) {
                 throw new LlmException(LlmException.LlmErrorCode.UNAVAILABLE, "GOOGLE_AI_API_KEY is not configured");
             }
 
-            // Default model when blank or left at placeholder default.
-            if (model == null || model.isBlank() || model.equals("gemini-2.0-flash-001")) {
+            if (model == null || model.isBlank()) {
                 model = "gemini-2.0-flash-001";
             }
 
@@ -69,7 +68,7 @@ public class GeminiLlmClient implements LlmClient {
             GeminiRequest geminiRequest = buildGeminiRequest(request);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8"));
 
             String requestBody = objectMapper.writeValueAsString(geminiRequest);
             log.debug("Gemini API request: {}", truncate(requestBody, 500));
@@ -129,7 +128,8 @@ public class GeminiLlmClient implements LlmClient {
 
     @Override
     public boolean isAvailable() {
-        String apiKey = alertAssistantConfig.getLlm().getApiKey();
+        AlertAssistantConfig.ProviderConfig providerConfig = alertAssistantConfig.getLlm().getProvider("gemini");
+        String apiKey = providerConfig.getApiKey();
         return apiKey != null && !apiKey.isBlank();
     }
 
