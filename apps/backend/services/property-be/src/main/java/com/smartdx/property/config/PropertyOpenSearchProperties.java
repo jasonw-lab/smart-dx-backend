@@ -1,5 +1,6 @@
 package com.smartdx.property.config;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,12 +36,13 @@ public class PropertyOpenSearchProperties {
 
     @Bean
     public OpenSearchClient openSearchClient(ObjectMapper objectMapper) {
-        System.out.println("[OpenSearch] enabled=" + enabled + ", endpoint=" + endpoint);
+        String effectiveEndpoint = StrUtil.isBlank(endpoint) ? "http://localhost:9200" : endpoint;
+        System.out.println("[OpenSearch] enabled=" + enabled + ", endpoint=" + effectiveEndpoint);
         if (!enabled) {
             return null;
         }
         try {
-            URI uri = URI.create(endpoint);
+            URI uri = URI.create(effectiveEndpoint);
             String scheme = uri.getScheme() != null ? uri.getScheme() : "http";
             String host = uri.getHost() != null ? uri.getHost() : "localhost";
             int port = uri.getPort() > 0 ? uri.getPort() : 9200;

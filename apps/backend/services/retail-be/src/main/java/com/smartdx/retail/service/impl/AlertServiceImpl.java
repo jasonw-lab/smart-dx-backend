@@ -1,6 +1,7 @@
 package com.smartdx.retail.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.smartdx.retail.mapper.AlertMapper;
 import com.smartdx.retail.mapper.DeviceMapper;
@@ -40,6 +41,17 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
                 .eq(storeId != null, Alert::getStoreId, storeId)
                 .eq(StringUtils.hasText(status), Alert::getStatus, status)
                 .orderByDesc(Alert::getDetectedAt);
+        List<Alert> alerts = this.list(queryWrapper);
+        return toPageVO(alerts);
+    }
+
+    @Override
+    public List<AlertPageVO> listTodayAlerts() {
+        // デモ環境では検知日が古いデータも含め、未解決アラートを優先度順に返す
+        QueryWrapper<Alert> queryWrapper = new QueryWrapper<Alert>()
+                .notIn("status", "RESOLVED", "CLOSED")
+                .orderByAsc("FIELD(priority,'P1','P2','P3','P4')")
+                .orderByDesc("detected_at");
         List<Alert> alerts = this.list(queryWrapper);
         return toPageVO(alerts);
     }

@@ -30,7 +30,7 @@ public class RoleController {
     private final RoleService roleService;
 
     @Operation(summary = "角色分页列表")
-    @GetMapping
+    @GetMapping("/page")
     public PageResult<RolePageVO> getRolePage(RoleQuery queryParams) {
         Page<RolePageVO> result = roleService.getRolePage(queryParams);
         return PageResult.success(result);

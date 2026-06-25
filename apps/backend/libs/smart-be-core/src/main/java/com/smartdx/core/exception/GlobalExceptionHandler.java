@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 /**
  * グローバル例外ハンドラ
@@ -81,6 +83,28 @@ public class GlobalExceptionHandler {
         log.warn("Parameter type mismatch: {} = {}", e.getName(), e.getValue());
         return Result.failed(ResultCode.USER_REQUEST_PARAMETER_ERROR,
                 "Invalid value for parameter '" + e.getName() + "'");
+    }
+
+    /**
+     * リクエストメソッドがサポートされていない (URL とメソッドの組み合わせが存在しない)
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public Result<Void> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        log.warn("Method not supported: {} (supported: {})", e.getMethod(), e.getSupportedMethods());
+        return Result.failed(ResultCode.INTERFACE_NOT_EXIST,
+                "リクエストされたAPIは存在しません: method=" + e.getMethod());
+    }
+
+    /**
+     * インターフェースが存在しない
+     */
+    @ExceptionHandler(NoHandlerFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<Void> handleNoHandlerFound(NoHandlerFoundException e) {
+        log.warn("No handler found: {} {}", e.getHttpMethod(), e.getRequestURL());
+        return Result.failed(ResultCode.INTERFACE_NOT_EXIST,
+                "リクエストされたAPIは存在しません: " + e.getHttpMethod() + " " + e.getRequestURL());
     }
 
     /**

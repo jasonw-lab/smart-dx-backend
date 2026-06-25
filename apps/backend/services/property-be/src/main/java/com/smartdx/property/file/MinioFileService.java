@@ -1,5 +1,6 @@
 package com.smartdx.property.file;
 
+import cn.hutool.core.util.StrUtil;
 import io.minio.*;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,9 @@ public class MinioFileService {
 
     @Value("${minio.endpoint:http://localhost:9000}")
     private String endpoint;
+
+    @Value("${minio.external-endpoint:}")
+    private String externalEndpoint;
 
     @Value("${minio.access-key:minioadmin}")
     private String accessKey;
@@ -183,11 +187,13 @@ public class MinioFileService {
 
     /**
      * オブジェクトURLを構築
+     * <p>ブラウザからアクセス可能な外部エンドポイントが設定されている場合はそちらを優先する。
      */
     public String buildObjectUrl(String objectName) {
         if (objectName == null || objectName.isEmpty()) {
             return null;
         }
-        return endpoint + "/" + bucket + "/" + objectName;
+        String baseUrl = StrUtil.isBlank(externalEndpoint) ? endpoint : externalEndpoint;
+        return baseUrl + "/" + bucket + "/" + objectName;
     }
 }
