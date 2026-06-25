@@ -24,7 +24,7 @@ public class LogController {
     private final LogService logService;
 
     @Operation(summary = "ログページリスト")
-    @GetMapping
+    @GetMapping("/page")
     public PageResult<LogPageVO> getLogPage(LogQuery query) {
         Page<LogPageVO> result = logService.getLogPage(query);
         return PageResult.success(result);

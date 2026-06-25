@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS sys_tenant_plan_menu (
 -- Dictionary table
 CREATE TABLE IF NOT EXISTS sys_dict (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+    tenant_id BIGINT DEFAULT 0 COMMENT '租户ID',
     dict_code VARCHAR(50) DEFAULT NULL COMMENT 'タイプコード',
     name VARCHAR(50) DEFAULT NULL COMMENT 'タイプ名',
     status TINYINT(1) DEFAULT 0 COMMENT '状態(0:正常 1:禁用)',
@@ -184,12 +185,14 @@ CREATE TABLE IF NOT EXISTS sys_dict (
     update_by BIGINT DEFAULT NULL COMMENT '更新者ID',
     is_deleted TINYINT DEFAULT 0 COMMENT '削除フラグ(1-削除済 0-未削除)',
     PRIMARY KEY (id) USING BTREE,
-    KEY idx_dict_code (dict_code)
+    KEY idx_dict_code (dict_code),
+    KEY idx_tenant_id (tenant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据字典类型表';
 
 -- Dictionary item table
 CREATE TABLE IF NOT EXISTS sys_dict_item (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+    tenant_id BIGINT DEFAULT 0 COMMENT '租户ID',
     dict_code VARCHAR(50) DEFAULT NULL COMMENT '関連字典コード',
     value VARCHAR(50) DEFAULT NULL COMMENT '字典項目値',
     label VARCHAR(100) DEFAULT NULL COMMENT '字典項目ラベル',
@@ -201,7 +204,8 @@ CREATE TABLE IF NOT EXISTS sys_dict_item (
     create_by BIGINT DEFAULT NULL COMMENT '作成者ID',
     update_time DATETIME DEFAULT NULL COMMENT '更新時間',
     update_by BIGINT DEFAULT NULL COMMENT '更新者ID',
-    PRIMARY KEY (id) USING BTREE
+    PRIMARY KEY (id) USING BTREE,
+    KEY idx_tenant_id (tenant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据字典项表';
 
 -- System log table

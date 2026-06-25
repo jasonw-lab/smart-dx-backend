@@ -91,9 +91,27 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
-  packages-to-scan: com.smartdx.retail.controller
+  packages-to-scan:
+    - com.smartdx.retail.controller
+    - com.smartdx.retail.ai.controller
 
 knife4j:
   enable: true
   setting:
     language: zh_cn
+
+retail:
+  ai:
+    llm:
+      enabled: ${RETAIL_AI_LLM_ENABLED:true}
+      provider: ${RETAIL_AI_LLM_PROVIDER:gemini}
+      api-key: ${RETAIL_AI_LLM_API_KEY:${GOOGLE_AI_API_KEY:}}
+      model: ${RETAIL_AI_LLM_MODEL:gemini-2.0-flash-001}
+      timeout-ms: ${RETAIL_AI_LLM_TIMEOUT_MS:5000}
+      providers:
+        gemini:
+          api-key: ${RETAIL_AI_LLM_GEMINI_API_KEY:${GOOGLE_AI_API_KEY:}}
+          model: ${RETAIL_AI_LLM_GEMINI_MODEL:${RETAIL_AI_LLM_MODEL:gemini-2.0-flash-001}}
+        kimi:
+          api-key: ${RETAIL_AI_LLM_KIMI_API_KEY:${KIMI_API_KEY:}}
+          model: ${RETAIL_AI_LLM_KIMI_MODEL:moonshot-v1-8k}

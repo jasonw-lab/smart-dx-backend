@@ -504,6 +504,12 @@ components:
           type: string
         thumbnailUrl:
           type: string
+        previewSm:
+          type: string
+          description: サムネイル小画像URL
+        previewLg:
+          type: string
+          description: サムネイル大画像URL
 
     PropertyDetailResponse:
       type: object
