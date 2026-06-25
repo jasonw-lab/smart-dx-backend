@@ -14,4 +14,7 @@ public class AlertAssistantReq {
 
     @Schema(description = "User message", example = "今日対応すべき優先アラートは？")
     private String message;
+
+    @Schema(description = "LLM provider to use (gemini, kimi)", example = "kimi")
+    private String llm;
 }

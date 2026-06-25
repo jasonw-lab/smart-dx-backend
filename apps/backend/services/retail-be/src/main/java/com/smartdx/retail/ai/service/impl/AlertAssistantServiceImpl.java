@@ -14,16 +14,14 @@ import com.smartdx.retail.model.vo.AlertPageVO;
 import com.smartdx.retail.service.AlertService;
 import com.smartdx.security.model.UserDetails;
 import com.smartdx.tenant.TenantContextHolder;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,8 +46,20 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
 
     private final AlertService alertService;
     private final AlertAssistantConfig alertAssistantConfig;
-    private final ObjectProvider<LlmClient> llmClientProvider;
+    private final List<LlmClient> llmClients;
     private final ObjectMapper objectMapper;
+
+    @PostConstruct
+    public void logAvailableClients() {
+        if (llmClients == null || llmClients.isEmpty()) {
+            log.info("[AI_ALERT_AUDIT] No LLM clients available");
+        } else {
+            String names = llmClients.stream()
+                    .map(c -> c.getProviderName() + "(available=" + c.isAvailable() + ")")
+                    .collect(Collectors.joining(", "));
+            log.info("[AI_ALERT_AUDIT] Available LLM clients: {}", names);
+        }
+    }
 
     @Override
     public AlertAssistantVO answerPriorityAlerts(AlertAssistantReq request) {
@@ -61,12 +71,13 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
 
         List<AlertPageVO> alerts = alertService.listTodayAlerts();
 
-        LlmClient llmClient = llmClientProvider.getIfAvailable();
         boolean llmEnabled = alertAssistantConfig.getLlm().isEnabled();
+        LlmClient llmClient = resolveLlmClient(request.getLlm());
         boolean llmAvailable = llmClient != null && llmClient.isAvailable();
-        log.debug("[AI_ALERT_AUDIT] llmEnabled={} llmClient={} llmAvailable={} apiKeyPresent={}",
-                llmEnabled, llmClient != null, llmAvailable,
-                alertAssistantConfig.getLlm().getApiKey() != null && !alertAssistantConfig.getLlm().getApiKey().isBlank());
+        log.debug("[AI_ALERT_AUDIT] llmEnabled={} requestedLlm={} resolvedClient={} llmAvailable={}",
+                llmEnabled, request.getLlm(),
+                llmClient != null ? llmClient.getProviderName() : "none",
+                llmAvailable);
 
         if (llmEnabled && llmAvailable) {
             try {
@@ -112,6 +123,27 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
             throw new LlmException(LlmException.LlmErrorCode.INVALID_RESPONSE, "Gemini returned empty content");
         }
         return response;
+    }
+
+    private LlmClient resolveLlmClient(String requestedLlm) {
+        if (llmClients == null || llmClients.isEmpty()) {
+            return null;
+        }
+        String provider = requestedLlm;
+        if (provider == null || provider.isBlank()) {
+            provider = alertAssistantConfig.getLlm().getProvider();
+        }
+        final String target = provider.trim().toLowerCase();
+        Optional<LlmClient> exact = llmClients.stream()
+                .filter(c -> c.getProviderName().equalsIgnoreCase(target))
+                .findFirst();
+        if (exact.isPresent()) {
+            return exact.get();
+        }
+        return llmClients.stream()
+                .filter(LlmClient::isAvailable)
+                .findFirst()
+                .orElse(null);
     }
 
     private String resolveModelName(LlmResponse response, LlmClient llmClient) {

@@ -108,3 +108,10 @@ retail:
       api-key: ${RETAIL_AI_LLM_API_KEY:${GOOGLE_AI_API_KEY:}}
       model: ${RETAIL_AI_LLM_MODEL:gemini-2.0-flash-001}
       timeout-ms: ${RETAIL_AI_LLM_TIMEOUT_MS:5000}
+      providers:
+        gemini:
+          api-key: ${RETAIL_AI_LLM_GEMINI_API_KEY:${GOOGLE_AI_API_KEY:}}
+          model: ${RETAIL_AI_LLM_GEMINI_MODEL:${RETAIL_AI_LLM_MODEL:gemini-2.0-flash-001}}
+        kimi:
+          api-key: ${RETAIL_AI_LLM_KIMI_API_KEY:${KIMI_API_KEY:}}
+          model: ${RETAIL_AI_LLM_KIMI_MODEL:moonshot-v1-8k}
