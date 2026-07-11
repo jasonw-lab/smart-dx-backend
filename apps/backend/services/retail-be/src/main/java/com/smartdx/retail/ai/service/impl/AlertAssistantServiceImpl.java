@@ -114,13 +114,12 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
                 .userPrompt(userPrompt)
                 .maxOutputTokens(800)
                 .temperature(0.2)
-                .timeoutMs(alertAssistantConfig.getLlm().getTimeoutMs())
                 .build();
 
         LlmResponse response = llmClient.complete(llmRequest);
         String content = response.getContent();
         if (content == null || content.isBlank()) {
-            throw new LlmException(LlmException.LlmErrorCode.INVALID_RESPONSE, "Gemini returned empty content");
+            throw new LlmException(LlmException.LlmErrorCode.INVALID_RESPONSE, "LLM returned empty content");
         }
         return response;
     }
@@ -133,17 +132,27 @@ public class AlertAssistantServiceImpl implements AlertAssistantService {
         if (provider == null || provider.isBlank()) {
             provider = alertAssistantConfig.getLlm().getProvider();
         }
-        final String target = provider.trim().toLowerCase();
+        final String target = normalizeProviderName(provider);
         Optional<LlmClient> exact = llmClients.stream()
-                .filter(c -> c.getProviderName().equalsIgnoreCase(target))
+                .filter(c -> normalizeProviderName(c.getProviderName()).equals(target))
                 .findFirst();
         if (exact.isPresent()) {
             return exact.get();
         }
-        return llmClients.stream()
-                .filter(LlmClient::isAvailable)
-                .findFirst()
-                .orElse(null);
+        if (requestedLlm != null && !requestedLlm.isBlank()) {
+            log.warn("[AI_ALERT_AUDIT] Unsupported LLM provider requested: {}", requestedLlm);
+            throw new IllegalArgumentException("Unsupported LLM provider: " + requestedLlm);
+        }
+        log.warn("[AI_ALERT_AUDIT] Configured LLM provider is not registered: {}", provider);
+        return null;
+    }
+
+    private String normalizeProviderName(String provider) {
+        String normalized = provider == null ? "" : provider.trim().toLowerCase(Locale.ROOT);
+        if ("smartdx-local".equals(normalized)) {
+            return "local";
+        }
+        return normalized;
     }
 
     private String resolveModelName(LlmResponse response, LlmClient llmClient) {

@@ -66,17 +66,20 @@ public class AlertAssistantConfig {
          * @return provider config, never null
          */
         public ProviderConfig getProvider(String name) {
-            ProviderConfig providerConfig = providers.get(name);
-            if (providerConfig == null) {
-                providerConfig = new ProviderConfig();
+            ProviderConfig source = providers != null ? providers.get(name) : null;
+            ProviderConfig providerConfig = new ProviderConfig();
+            if (source != null) {
+                providerConfig.setApiKey(source.getApiKey());
+                providerConfig.setModel(source.getModel());
+                providerConfig.setBaseUrl(source.getBaseUrl());
             }
             if (providerConfig.getApiKey() == null || providerConfig.getApiKey().isBlank()) {
-                if (name.equalsIgnoreCase(provider)) {
+                if (name != null && name.equalsIgnoreCase(provider)) {
                     providerConfig.setApiKey(apiKey);
                 }
             }
             if (providerConfig.getModel() == null || providerConfig.getModel().isBlank()) {
-                if (name.equalsIgnoreCase(provider)) {
+                if (name != null && name.equalsIgnoreCase(provider)) {
                     providerConfig.setModel(model);
                 }
             }

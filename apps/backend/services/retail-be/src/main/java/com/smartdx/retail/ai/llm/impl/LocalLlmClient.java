@@ -4,11 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartdx.retail.ai.llm.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -21,12 +19,11 @@ import java.util.stream.Collectors;
  * @author jason.w
  */
 @Component
-@ConditionalOnProperty(name = "retail.ai.llm.provider", havingValue = "local")
 @Slf4j
 public class LocalLlmClient implements LlmClient {
 
     private static final String MODEL_NAME = "smartdx-local";
-    private static final String PROVIDER_NAME = "smartdx-local";
+    private static final String PROVIDER_NAME = "local";
 
     private final ObjectMapper objectMapper;
 
@@ -57,11 +54,6 @@ public class LocalLlmClient implements LlmClient {
             throw new LlmException(LlmException.LlmErrorCode.UNAVAILABLE,
                     "Local summary generation failed: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public CompletableFuture<LlmResponse> completeAsync(LlmRequest request) {
-        return CompletableFuture.supplyAsync(() -> complete(request));
     }
 
     @Override
