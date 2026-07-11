@@ -700,11 +700,11 @@ public class PropertyEsSearchServiceImpl implements PropertyEsSearchService {
             vo.setPreviewSm(resolveAssetUrl(thumbnailSmKey));
             vo.setPreviewLg(resolveAssetUrl(thumbnailLgKey));
             if (vo.getThumbnailUrl() == null) {
-                log.warn("PropertySummary thumbnailUrl is null: propertyKey={}, mainImage={}",
+                log.debug("PropertySummary thumbnailUrl is null: propertyKey={}, mainImage={}",
                         vo.getPropertyKey(), mainImage);
             }
         } else {
-            log.warn("PropertySummary mainImage is missing: propertyKey={}", vo.getPropertyKey());
+            log.debug("PropertySummary mainImage is missing: propertyKey={}", vo.getPropertyKey());
         }
 
         vo.setDraftSuggested(false);

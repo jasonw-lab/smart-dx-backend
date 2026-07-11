@@ -86,6 +86,17 @@ knife4j:
   enable: false
   production: true
 
+retail:
+  ai:
+    llm:
+      enabled: true
+      provider: local
+      providers:
+        gemini:
+          api-key: ""
+        kimi:
+          api-key: ""
+
 logging:
   level:
     com.smartdx: DEBUG

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 /**
@@ -105,6 +106,17 @@ public class GlobalExceptionHandler {
         log.warn("No handler found: {} {}", e.getHttpMethod(), e.getRequestURL());
         return Result.failed(ResultCode.INTERFACE_NOT_EXIST,
                 "リクエストされたAPIは存在しません: " + e.getHttpMethod() + " " + e.getRequestURL());
+    }
+
+    /**
+     * 静的リソースとしても解決できない URL
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<Void> handleNoResourceFound(NoResourceFoundException e) {
+        log.warn("No resource found: {} {}", e.getHttpMethod(), e.getResourcePath());
+        return Result.failed(ResultCode.INTERFACE_NOT_EXIST,
+                "リクエストされたAPIは存在しません: " + e.getHttpMethod() + " " + e.getResourcePath());
     }
 
     /**

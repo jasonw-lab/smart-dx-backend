@@ -38,4 +38,22 @@ class AlertAssistantConfigTest {
         assertThat(alertAssistantConfig.getLlm().getModel()).isEqualTo("gemini-test-model");
         assertThat(alertAssistantConfig.getLlm().getTimeoutMs()).isEqualTo(3000L);
     }
+
+    @Test
+    void getProviderReturnsResolvedCopyWithoutMutatingSourceConfig() {
+        AlertAssistantConfig.LlmConfig llmConfig = new AlertAssistantConfig.LlmConfig();
+        llmConfig.setProvider("gemini");
+        llmConfig.setApiKey("legacy-api-key");
+        llmConfig.setModel("legacy-model");
+
+        AlertAssistantConfig.ProviderConfig source = new AlertAssistantConfig.ProviderConfig();
+        llmConfig.getProviders().put("gemini", source);
+
+        AlertAssistantConfig.ProviderConfig resolved = llmConfig.getProvider("gemini");
+
+        assertThat(resolved.getApiKey()).isEqualTo("legacy-api-key");
+        assertThat(resolved.getModel()).isEqualTo("legacy-model");
+        assertThat(source.getApiKey()).isNull();
+        assertThat(source.getModel()).isNull();
+    }
 }

@@ -59,6 +59,7 @@ Thumbs.db
 # Project specific
 p-*.md
 .review/
+docs/.review/
 docs/biz/
 *.bak
 .agents
