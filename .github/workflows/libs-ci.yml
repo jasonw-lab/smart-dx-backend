@@ -31,7 +31,7 @@ jobs:
       - name: Build libs
         run: |
           mvn -f apps/backend/pom.xml clean verify \
-            -pl smart-be-core,smart-be-security,smart-be-tenant,smart-be-redis,smart-be-opensearch,smart-be-observability \
+            -pl libs/smart-be-core,libs/smart-be-security,libs/smart-be-tenant,libs/smart-be-redis,libs/smart-be-opensearch,libs/smart-be-observability \
             -am \
             --batch-mode
 
