@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>smart-dx-backend E2E Test List</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #17202a;
+      --muted: #667085;
+      --line: #d8dde6;
+      --accent: #0f766e;
+      --accent-soft: #e6f4f1;
+      --warn-soft: #fff7e6;
+      --warn: #9a6700;
+      --code: #eef2f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 18px;
+      background: #111827;
+      color: #f9fafb;
+      overflow: auto;
+    }
+
+    nav h1 {
+      margin: 0 0 18px;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    nav a {
+      display: block;
+      padding: 7px 0;
+      color: #d1d5db;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      color: #ffffff;
+    }
+
+    main {
+      padding: 32px;
+      max-width: 1280px;
+      width: 100%;
+    }
+
+    .hero,
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-bottom: 22px;
+      padding: 24px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 17px;
+      color: var(--accent);
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      padding: 14px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f1f4f7;
+      white-space: nowrap;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--code);
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-size: 0.92em;
+    }
+
+    pre {
+      margin: 10px 0 0;
+      padding: 12px;
+      overflow: auto;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      background: #fcfcfd;
+      margin: 10px 0;
+      padding: 12px 14px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 22px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .note {
+      border-left: 4px solid var(--warn);
+      background: var(--warn-soft);
+      padding: 12px 14px;
+      color: #533f04;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        position: static;
+        height: auto;
+      }
+
+      main {
+        padding: 18px;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav>
+      <h1>E2E Test List</h1>
+      <a href="#summary">概要</a>
+      <a href="#commands">実行コマンド</a>
+      <a href="#modules">モジュール別一覧</a>
+      <a href="#methods">テストメソッド</a>
+      <a href="#notes">注意事項</a>
+    </nav>
+
+    <main>
+      <header class="hero">
+        <h1>smart-dx-backend E2E / Integration Test List</h1>
+        <p class="muted">対象: <code>apps/backend/**/src/test/java</code> 配下の <code>*E2ETest</code>, <code>*IntegrationTest</code>, <code>*IsolationSecurityTest</code></p>
+      </header>
+
+      <section id="summary">
+        <h2>概要</h2>
+        <div class="summary-grid">
+          <div class="metric"><strong>18</strong><span>テストクラス</span></div>
+          <div class="metric"><strong>118</strong><span>テストメソッド</span></div>
+          <div class="metric"><strong>4</strong><span>対象モジュール</span></div>
+          <div class="metric"><strong>e2e</strong><span>主な Spring profile</span></div>
+        </div>
+      </section>
+
+      <section id="commands">
+        <h2>実行コマンド</h2>
+        <p>OrbStack 環境では Testcontainers に Docker socket を明示する。</p>
+        <pre><code>export DOCKER_HOST="unix://$HOME/.orbstack/run/docker.sock"
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock</code></pre>
+
+        <h3>統合 app E2E</h3>
+        <pre><code>cd apps/backend
+mvn -pl app -Dtest=AuthE2ETest,MultiTenantIntegrationTest,TenantIsolationSecurityTest test</code></pre>
+
+        <h3>system-be E2E</h3>
+        <pre><code>cd apps/backend
+mvn -pl services/system-be -Dtest=AuthE2ETest test</code></pre>
+
+        <h3>retail-be E2E</h3>
+        <pre><code>cd apps/backend
+mvn -pl services/retail-be -Dtest=AlertAssistantE2ETest,AlertE2ETest,DashboardE2ETest,DeviceE2ETest,InventoryE2ETest,ProductE2ETest,SalesE2ETest test</code></pre>
+
+        <h3>property-be E2E</h3>
+        <pre><code>cd apps/backend
+mvn -pl services/property-be -Dtest=PropertyBulkImportE2ETest,PropertyCreateE2ETest,PropertyImageSearchE2ETest,PropertyOpenSearchE2ETest,PropertySearchE2ETest,PropertySimilarSearchE2ETest,ChatbotSearchE2ETest test</code></pre>
+      </section>
+
+      <section id="modules">
+        <h2>モジュール別一覧</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>モジュール</th>
+              <th>テストクラス</th>
+              <th>件数</th>
+              <th>主な対象</th>
+              <th>前提</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge">app</span></td>
+              <td><code>AuthE2ETest</code></td>
+              <td>9</td>
+              <td>captcha, login, refresh-token, logout, protected endpoint</td>
+              <td>Testcontainers: MySQL 8.0 / Redis 7</td>
+            </tr>
+            <tr>
+              <td><span class="badge">app</span></td>
+              <td><code>MultiTenantIntegrationTest</code></td>
+              <td>8</td>
+              <td>tenant 作成、tenant_id 自動付与、SELECT/UPDATE/DELETE の tenant 分離</td>
+              <td>Testcontainers: MySQL 8.0 / Redis 7</td>
+            </tr>
+            <tr>
+              <td><span class="badge">app</span></td>
+              <td><code>TenantIsolationSecurityTest</code></td>
+              <td>9</td>
+              <td>他 tenant 参照/更新/削除防止、ID probing、SQL injection 風入力、並行リクエスト</td>
+              <td>Testcontainers: MySQL 8.0 / Redis 7</td>
+            </tr>
+            <tr>
+              <td><span class="badge">system-be</span></td>
+              <td><code>AuthE2ETest</code></td>
+              <td>9</td>
+              <td>system-be 単体構成での認証 API E2E</td>
+              <td>Testcontainers: MySQL 8.0 / Redis 7</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>PropertyBulkImportE2ETest</code></td>
+              <td>2</td>
+              <td>CSV bulk import の成功/検証エラー</td>
+              <td>application-e2e.yml の MySQL / Redis / MinIO 等</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>PropertyCreateE2ETest</code></td>
+              <td>5</td>
+              <td>物件作成 CSV/Excel 入力、写真形式、必須項目、認証</td>
+              <td>application-e2e.yml の MySQL / Redis / MinIO 等</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>PropertyImageSearchE2ETest</code></td>
+              <td>14</td>
+              <td>画像署名 URL、embedding ref、KNN 検索、未認証/不正入力</td>
+              <td>application-e2e.yml の MySQL / Redis / MinIO / OpenSearch</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>PropertyOpenSearchE2ETest</code></td>
+              <td>9</td>
+              <td>OpenSearch lookup、keyword、draft/published scope、filter、pagination</td>
+              <td>OpenSearch 利用可能時のみ実行</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>PropertySearchE2ETest</code></td>
+              <td>16</td>
+              <td>物件検索/詳細、draft/published、asset/doc、認証、不正 scope/key</td>
+              <td>application-e2e.yml の MySQL / Redis / OpenSearch</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>PropertySimilarSearchE2ETest</code></td>
+              <td>11</td>
+              <td>類似物件検索、minScore/topK、vector 未準備、認証、不正 key</td>
+              <td>OpenSearch 利用可能時のみ実行</td>
+            </tr>
+            <tr>
+              <td><span class="badge">property-be</span></td>
+              <td><code>ChatbotSearchE2ETest</code></td>
+              <td>11</td>
+              <td>チャットボット物件検索、条件抽出、曖昧入力、認証、件数返却</td>
+              <td>LLM disabled / rule-based 前提の e2e profile</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>AlertAssistantE2ETest</code></td>
+              <td>4</td>
+              <td>AI alert assistant、local LLM summary、invalid message、未認証</td>
+              <td>Testcontainers: MySQL 8.0 / Redis 7。外部 LLM API 不使用</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>AlertE2ETest</code></td>
+              <td>2</td>
+              <td>alert list/detail と store/product 名解決</td>
+              <td>RetailE2EBase</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>DashboardE2ETest</code></td>
+              <td>1</td>
+              <td>KPI endpoint</td>
+              <td>RetailE2EBase</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>DeviceE2ETest</code></td>
+              <td>2</td>
+              <td>device list/detail と store 名解決</td>
+              <td>RetailE2EBase</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>InventoryE2ETest</code></td>
+              <td>2</td>
+              <td>inventory list と low-stock status</td>
+              <td>RetailE2EBase</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>ProductE2ETest</code></td>
+              <td>2</td>
+              <td>product page の stock/sales 集計</td>
+              <td>RetailE2EBase</td>
+            </tr>
+            <tr>
+              <td><span class="badge">retail-be</span></td>
+              <td><code>SalesE2ETest</code></td>
+              <td>2</td>
+              <td>sales list/detail と store 名解決</td>
+              <td>RetailE2EBase</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="methods">
+        <h2>テストメソッド一覧</h2>
+
+        <details open>
+          <summary>app / AuthE2ETest (9)</summary>
+          <ul>
+            <li><code>getCaptcha_returnsOk_withoutAuthentication</code></li>
+            <li><code>login_returnsToken_withValidCredentials</code></li>
+            <li><code>login_returnsError_withInvalidPassword</code></li>
+            <li><code>login_returnsError_withNonExistentUser</code></li>
+            <li><code>login_returnsError_withMissingUsername</code></li>
+            <li><code>refreshToken_returnsNewToken_withValidRefreshToken</code></li>
+            <li><code>logout_returnsOk_withValidToken</code></li>
+            <li><code>protectedEndpoint_returns401_withoutAuthentication</code></li>
+            <li><code>tokenIsValidAfterLogin</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>app / MultiTenantIntegrationTest (8)</summary>
+          <ul>
+            <li><code>tenantTable_hasDefaultTenant</code></li>
+            <li><code>canCreateSecondTenant</code></li>
+            <li><code>creatingStore_setsTenantIdAutomatically</code></li>
+            <li><code>listingStores_onlyReturnsCurrentTenantData</code></li>
+            <li><code>gettingStoreById_respectsTenantIsolation</code></li>
+            <li><code>selectQueries_includeTenantIdCondition</code></li>
+            <li><code>updateQueries_areScopedToCurrentTenant</code></li>
+            <li><code>deleteQueries_areScopedToCurrentTenant</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>app / TenantIsolationSecurityTest (9)</summary>
+          <ul>
+            <li><code>cannotAccessOtherTenantStore_byId</code></li>
+            <li><code>cannotUpdateOtherTenantStore_byId</code></li>
+            <li><code>cannotDeleteOtherTenantStore_byId</code></li>
+            <li><code>listingStores_doesNotRevealOtherTenantData</code></li>
+            <li><code>sequentialIdProbing_doesNotRevealTenantData</code></li>
+            <li><code>cannotCreateStore_withWrongTenantIdInRequest</code></li>
+            <li><code>tenantFilter_cannotBeBypassed_withSqlInjectionInStoreCode</code></li>
+            <li><code>maliciousStoreName_doesNotAffectTenantFiltering</code></li>
+            <li><code>concurrentRequests_fromDifferentTenants_areIsolated</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>system-be / AuthE2ETest (9)</summary>
+          <ul>
+            <li><code>getCaptcha_returnsOk_withoutAuthentication</code></li>
+            <li><code>login_returnsToken_withValidCredentials</code></li>
+            <li><code>login_returnsError_withInvalidPassword</code></li>
+            <li><code>login_returnsError_withNonExistentUser</code></li>
+            <li><code>login_returnsError_withMissingUsername</code></li>
+            <li><code>refreshToken_returnsNewToken_withValidRefreshToken</code></li>
+            <li><code>logout_returnsOk_withValidToken</code></li>
+            <li><code>protectedEndpoint_returns401_withoutAuthentication</code></li>
+            <li><code>tokenIsValidAfterLogin</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / PropertyBulkImportE2ETest (2)</summary>
+          <ul>
+            <li><code>bulkImportAcceptsCsvAndCompletesSuccessfully</code></li>
+            <li><code>bulkImportRecordsValidationErrorsForInvalidRows</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / PropertyCreateE2ETest (5)</summary>
+          <ul>
+            <li><code>propertyCreate_acceptsCsvAndReturns202</code></li>
+            <li><code>propertyCreate_rejectsWithoutCsvOrExcel</code></li>
+            <li><code>propertyCreate_rejectsInvalidPhotoFormat</code></li>
+            <li><code>propertyCreate_rejectsWithoutListedYear</code></li>
+            <li><code>propertyCreate_rejectsWithoutAuthentication</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / PropertyImageSearchE2ETest (14)</summary>
+          <ul>
+            <li><code>extractEmbeddingReturns401WhenUnauthenticated</code></li>
+            <li><code>getOriginalUrlReturns401WhenUnauthenticated</code></li>
+            <li><code>getThumbnailUrlReturns401WhenUnauthenticated</code></li>
+            <li><code>getDocumentUrlReturns401WhenUnauthenticated</code></li>
+            <li><code>searchWithKnnReturns401WhenUnauthenticated</code></li>
+            <li><code>getOriginalUrlReturnsErrorForInvalidAssetKey</code></li>
+            <li><code>getThumbnailUrlReturnsErrorWhenSizeMissing</code></li>
+            <li><code>getThumbnailUrlReturnsErrorForInvalidSize</code></li>
+            <li><code>extractEmbeddingReturnsEmbeddingRefForMain</code></li>
+            <li><code>getOriginalUrlReturnsSignedUrl</code></li>
+            <li><code>getThumbnailUrlReturnsSignedUrlForSm</code></li>
+            <li><code>getDocumentUrlReturnsSignedUrl</code></li>
+            <li><code>searchWithEmbeddingRefReturnsResults</code></li>
+            <li><code>searchWithReferenceAssetReturnsResults</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / PropertyOpenSearchE2ETest (9)</summary>
+          <ul>
+            <li><code>lookupReturnsPublishedListingsFromOpenSearch</code></li>
+            <li><code>lookupSupportsKeywordSearchFromOpenSearch</code></li>
+            <li><code>lookupSupportsDraftScopeWithReviewStatusFilter</code></li>
+            <li><code>lookupSupportsPriceRangeFilter</code></li>
+            <li><code>lookupSupportsPriorityRankFilter</code></li>
+            <li><code>lookupSupportsAllScopeCrossSearch</code></li>
+            <li><code>lookupReturnsEmptyForNoMatchingResults</code></li>
+            <li><code>lookupSupportsPagination</code></li>
+            <li><code>lookupRequiresAuthentication</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / PropertySearchE2ETest (16)</summary>
+          <ul>
+            <li><code>lookupReturnsPublishedListingsWithAttributeFilters</code></li>
+            <li><code>lookupSupportsKeywordAndDraftFiltersForCurrentRegistrant</code></li>
+            <li><code>lookupReturnsEmptyPageForNoMatches</code></li>
+            <li><code>lookupRejectsInvalidPageSize</code></li>
+            <li><code>lookupRequiresAuthentication</code></li>
+            <li><code>getDetailReturnsFullDetailWithPublishedScope</code></li>
+            <li><code>getDetailReturns404ForNonExistentListing</code></li>
+            <li><code>getDetailReturnsDraftForReviewer</code></li>
+            <li><code>getDetailReturnsErrorWhenScopeMissing</code></li>
+            <li><code>getDetailReturnsEmptyAssetsWhenNoImages</code></li>
+            <li><code>getDetailReturnsEmptyDocumentsWhenNoDocs</code></li>
+            <li><code>getDetailReturnsCanViewSensitiveDocsForReviewer</code></li>
+            <li><code>getDetailReturns401WhenUnauthenticated</code></li>
+            <li><code>getDetailReturnsPendingReviewForDraft</code></li>
+            <li><code>getDetailReturnsErrorForInvalidListingKeyFormat</code></li>
+            <li><code>getDetailReturnsErrorForInvalidScope</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / PropertySimilarSearchE2ETest (11)</summary>
+          <ul>
+            <li><code>shouldReturnSimilarPropertiesWithDefaultTopK</code></li>
+            <li><code>shouldFilterByMinScore</code></li>
+            <li><code>shouldReturn404ForNonexistentProperty</code></li>
+            <li><code>shouldReturn422WhenVectorNotReady</code></li>
+            <li><code>shouldReturn400ForInvalidTopK</code></li>
+            <li><code>shouldReturnEmptyListWhenNoSimilarProperties</code></li>
+            <li><code>shouldExcludeReferencePropertyFromResults</code></li>
+            <li><code>shouldReturn401WithoutAuthentication</code></li>
+            <li><code>shouldReturnPropertySummaryVOFields</code></li>
+            <li><code>shouldReturn400ForInvalidPropertyKeyFormat</code></li>
+            <li><code>shouldRespectCustomTopK</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>property-be / ChatbotSearchE2ETest (11)</summary>
+          <ul>
+            <li><code>searchWithSimpleCondition</code></li>
+            <li><code>returnClarificationWhenNoCondition</code></li>
+            <li><code>searchWithMultipleAreas</code></li>
+            <li><code>searchWithStationWalk</code></li>
+            <li><code>scopeForcedToPublished</code></li>
+            <li><code>emptyMessageReturns400</code></li>
+            <li><code>unauthorizedReturns401</code></li>
+            <li><code>ambiguousWithLlmDisabled</code></li>
+            <li><code>responseContainsListAndTotal</code></li>
+            <li><code>searchWithEkichikaKeyword</code></li>
+            <li><code>searchWithPriceInOku</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / AlertAssistantE2ETest (4)</summary>
+          <ul>
+            <li><code>priority_withValidMessage_returnsLocalSummaryAndAlerts</code></li>
+            <li><code>priority_withInvalidMessage_returns400</code></li>
+            <li><code>priority_withNoAlerts_returnsEmptyLocalSummary</code></li>
+            <li><code>priority_withoutAuth_returns401</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / AlertE2ETest (2)</summary>
+          <ul>
+            <li><code>listAlerts_returnsAlerts_withStoreAndProductName</code></li>
+            <li><code>getAlertById_returnsAlert_withResolvedNames</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / DashboardE2ETest (1)</summary>
+          <ul>
+            <li><code>getKpi_returnsExpectedKeysAndValues</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / DeviceE2ETest (2)</summary>
+          <ul>
+            <li><code>listDevices_returnsDevices_withStoreName</code></li>
+            <li><code>getDeviceById_returnsDevice_withStoreName</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / InventoryE2ETest (2)</summary>
+          <ul>
+            <li><code>listInventories_returnsInventory_withProductAndStoreName</code></li>
+            <li><code>listInventories_returnsLowStockStatus</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / ProductE2ETest (2)</summary>
+          <ul>
+            <li><code>getProductPage_returnsStockAndSales</code></li>
+            <li><code>getProductPage_returnsZeroForProductWithoutInventoryOrSales</code></li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>retail-be / SalesE2ETest (2)</summary>
+          <ul>
+            <li><code>listSales_returnsSalesWithinDateRange_withStoreName</code></li>
+            <li><code>getSalesById_returnsSale_withStoreName</code></li>
+          </ul>
+        </details>
+      </section>
+
+      <section id="notes">
+        <h2>注意事項</h2>
+        <div class="note">
+          <p><strong>OpenSearch 系 property E2E:</strong> <code>PropertyOpenSearchE2ETest</code> と <code>PropertySimilarSearchE2ETest</code> は OpenSearch availability check に依存し、利用不可の場合は <code>assumeTrue</code> によりスキップされる。</p>
+          <p><strong>retail AI E2E:</strong> <code>application-e2e.yml</code> で <code>retail.ai.llm.provider=local</code> を指定し、外部 LLM API へ到達しない。</p>
+          <p><strong>Docker socket:</strong> macOS + OrbStack では <code>DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock</code> の明示が必要な場合がある。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

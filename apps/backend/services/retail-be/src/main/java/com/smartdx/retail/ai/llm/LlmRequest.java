@@ -42,10 +42,4 @@ public class LlmRequest {
      */
     @Builder.Default
     private double temperature = 0.1;
-
-    /**
-     * Timeout in milliseconds.
-     */
-    @Builder.Default
-    private long timeoutMs = 3000;
 }

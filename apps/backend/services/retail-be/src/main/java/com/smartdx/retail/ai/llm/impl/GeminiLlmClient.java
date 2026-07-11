@@ -6,16 +6,16 @@ import com.smartdx.retail.ai.config.AlertAssistantConfig;
 import com.smartdx.retail.ai.llm.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Google AI Studio (Gemini) LLM client for the AI alert assistant.
@@ -63,12 +63,13 @@ public class GeminiLlmClient implements LlmClient {
                 model = "gemini-2.0-flash-001";
             }
 
-            String url = GEMINI_API_BASE_URL + model + ":generateContent?key=" + apiKey;
+            String url = GEMINI_API_BASE_URL + model + ":generateContent";
 
             GeminiRequest geminiRequest = buildGeminiRequest(request);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8"));
+            headers.set("x-goog-api-key", apiKey);
 
             String requestBody = objectMapper.writeValueAsString(geminiRequest);
             log.debug("Gemini API request: {}", truncate(requestBody, 500));
@@ -109,16 +110,26 @@ public class GeminiLlmClient implements LlmClient {
 
         } catch (LlmException e) {
             throw e;
+        } catch (HttpStatusCodeException e) {
+            LlmException.LlmErrorCode errorCode = e.getStatusCode().value() == 429
+                    ? LlmException.LlmErrorCode.RATE_LIMITED
+                    : LlmException.LlmErrorCode.API_ERROR;
+            String message = "Gemini API returned status: " + e.getStatusCode().value();
+            log.warn("Gemini API call failed: {}", message);
+            throw new LlmException(errorCode, message, e);
+        } catch (ResourceAccessException e) {
+            LlmException.LlmErrorCode errorCode = containsTimeout(e)
+                    ? LlmException.LlmErrorCode.TIMEOUT
+                    : LlmException.LlmErrorCode.API_ERROR;
+            String message = sanitizeExceptionMessage(e);
+            log.warn("Gemini API call failed: {}", message, e);
+            throw new LlmException(errorCode, "Gemini API call failed: " + message, e);
         } catch (Exception e) {
-            log.error("Gemini API call failed", e);
+            String message = sanitizeExceptionMessage(e);
+            log.error("Gemini API call failed: {}", message, e);
             throw new LlmException(LlmException.LlmErrorCode.API_ERROR,
-                    "Gemini API call failed: " + e.getMessage(), e);
+                    "Gemini API call failed: " + message, e);
         }
-    }
-
-    @Override
-    public CompletableFuture<LlmResponse> completeAsync(LlmRequest request) {
-        return CompletableFuture.supplyAsync(() -> complete(request));
     }
 
     @Override
@@ -209,6 +220,27 @@ public class GeminiLlmClient implements LlmClient {
     private String truncate(String str, int maxLength) {
         if (str == null) return "null";
         return str.length() <= maxLength ? str : str.substring(0, maxLength) + "...";
+    }
+
+    private boolean containsTimeout(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private String sanitizeExceptionMessage(Throwable e) {
+        String message = e.getMessage();
+        if (message == null || message.isBlank()) {
+            return e.getClass().getSimpleName();
+        }
+        return message
+                .replaceAll("([?&]key=)[^&\\s]+", "$1****")
+                .replaceAll("(x-goog-api-key[=:]\\s*)[^,\\]\\s]+", "$1****");
     }
 
     // Gemini API DTOs
