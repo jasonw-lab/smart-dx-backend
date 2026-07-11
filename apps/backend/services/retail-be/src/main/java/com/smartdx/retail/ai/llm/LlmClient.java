@@ -1,7 +1,5 @@
 package com.smartdx.retail.ai.llm;
 
-import java.util.concurrent.CompletableFuture;
-
 /**
  * LLM client interface.
  *
@@ -17,14 +15,6 @@ public interface LlmClient {
      * @throws LlmException when the LLM call fails
      */
     LlmResponse complete(LlmRequest request) throws LlmException;
-
-    /**
-     * Send a prompt asynchronously.
-     *
-     * @param request LLM request
-     * @return future LLM response
-     */
-    CompletableFuture<LlmResponse> completeAsync(LlmRequest request);
 
     /**
      * Get the provider name.

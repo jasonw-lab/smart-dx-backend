@@ -7,15 +7,16 @@ import com.smartdx.retail.ai.config.AlertAssistantConfig;
 import com.smartdx.retail.ai.llm.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Kimi / Moonshot LLM client for the AI alert assistant.
@@ -98,16 +99,26 @@ public class KimiLlmClient implements LlmClient {
 
         } catch (LlmException e) {
             throw e;
+        } catch (HttpStatusCodeException e) {
+            LlmException.LlmErrorCode errorCode = e.getStatusCode().value() == 429
+                    ? LlmException.LlmErrorCode.RATE_LIMITED
+                    : LlmException.LlmErrorCode.API_ERROR;
+            String message = "Kimi API returned status: " + e.getStatusCode().value();
+            log.warn("Kimi API call failed: {}", message);
+            throw new LlmException(errorCode, message, e);
+        } catch (ResourceAccessException e) {
+            LlmException.LlmErrorCode errorCode = containsTimeout(e)
+                    ? LlmException.LlmErrorCode.TIMEOUT
+                    : LlmException.LlmErrorCode.API_ERROR;
+            String message = sanitizeExceptionMessage(e);
+            log.warn("Kimi API call failed: {}", message, e);
+            throw new LlmException(errorCode, "Kimi API call failed: " + message, e);
         } catch (Exception e) {
-            log.error("Kimi API call failed", e);
+            String message = sanitizeExceptionMessage(e);
+            log.error("Kimi API call failed: {}", message, e);
             throw new LlmException(LlmException.LlmErrorCode.API_ERROR,
-                    "Kimi API call failed: " + e.getMessage(), e);
+                    "Kimi API call failed: " + message, e);
         }
-    }
-
-    @Override
-    public CompletableFuture<LlmResponse> completeAsync(LlmRequest request) {
-        return CompletableFuture.supplyAsync(() -> complete(request));
     }
 
     @Override
@@ -318,6 +329,27 @@ public class KimiLlmClient implements LlmClient {
         return str.length() <= maxLength ? str : str.substring(0, maxLength) + "...";
     }
 
+    private boolean containsTimeout(Throwable e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private String sanitizeExceptionMessage(Throwable e) {
+        String message = e.getMessage();
+        if (message == null || message.isBlank()) {
+            return e.getClass().getSimpleName();
+        }
+        return message
+                .replaceAll("(Authorization:\\s*Bearer\\s+)[^,\\]\\s]+", "$1****")
+                .replaceAll("(x-api-key[=:]\\s*)[^,\\]\\s]+", "$1****");
+    }
+
     // OpenAI-compatible DTOs
     @Data
     static class OpenAiChatRequest {
@@ -345,14 +377,18 @@ public class KimiLlmClient implements LlmClient {
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class OpenAiChoice {
         private OpenAiMessage message;
+        @JsonProperty("finish_reason")
         private String finishReason;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class OpenAiUsage {
+        @JsonProperty("prompt_tokens")
         private int promptTokens;
+        @JsonProperty("completion_tokens")
         private int completionTokens;
+        @JsonProperty("total_tokens")
         private int totalTokens;
     }
 
@@ -380,6 +416,7 @@ public class KimiLlmClient implements LlmClient {
         private String type;
         private String role;
         private String model;
+        @JsonProperty("stop_reason")
         private String stopReason;
         private List<AnthropicContentBlock> content;
         private AnthropicUsage usage;
@@ -395,8 +432,11 @@ public class KimiLlmClient implements LlmClient {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class AnthropicUsage {
+        @JsonProperty("input_tokens")
         private int inputTokens;
+        @JsonProperty("output_tokens")
         private int outputTokens;
+        @JsonProperty("total_tokens")
         private int totalTokens;
     }
 }

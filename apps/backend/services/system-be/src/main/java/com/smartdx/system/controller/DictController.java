@@ -41,7 +41,7 @@ public class DictController {
     // ---------------------------------------------------
 
     @Operation(summary = "辞書ページリスト")
-    @GetMapping("/page")
+    @GetMapping({"", "/page"})
     public PageResult<DictPageVO> getDictPage(DictQuery query) {
         Page<DictPageVO> result = dictService.getDictPage(query);
         return PageResult.success(result);
@@ -100,7 +100,7 @@ public class DictController {
     // ---------------------------------------------------
 
     @Operation(summary = "辞書項目ページリスト")
-    @GetMapping("/{dictCode}/items/page")
+    @GetMapping({"/{dictCode}/items", "/{dictCode}/items/page"})
     public PageResult<DictItemPageVO> getDictItemPage(
             @Parameter(description = "辞書コード") @PathVariable String dictCode,
             DictItemQuery query
