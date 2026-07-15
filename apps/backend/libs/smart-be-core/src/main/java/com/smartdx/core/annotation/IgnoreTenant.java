@@ -14,7 +14,11 @@ import java.lang.annotation.Target;
  *
  * @author Ray.Hao
  * @since 3.0.0
+ * @deprecated {@code com.smartdx.tenant.annotation.IgnoreTenant} を使用すること。
+ *             本アノテーションは TenantAspect の対象外であり、付与しても何も起こらない。
+ *             次リリースで削除予定 (libs 破壊的変更ルールに基づく deprecate 期間)。
  */
+@Deprecated(forRemoval = true)
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface IgnoreTenant {

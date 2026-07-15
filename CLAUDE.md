@@ -13,6 +13,7 @@
 
 ## アーキテクチャ
 **Modular Monolith**: ソースは独立モジュール、デプロイは統合 (ADR-006)。
+- BE ソースの実体は `apps/backend/` 配下 (`apps/backend/{app,libs,services}/`)。本ファイルの `app/` `libs/` `services/` 表記はその配下を指す
 - 各ドメインモジュール (property-be, system-be, retail-be) はソースレベルで独立
 - `app/` が全モジュールを統合し、単一 fat jar (smart-dx-app.jar) としてビルド
 - 本番: 1コンテナ / 1 JVM / port 8080 で全ドメインを提供
@@ -31,7 +32,7 @@
 
 ## サービス間ルール
 - サービス間の直接Javaクラス参照は禁止 (libs経由のみ)
-- DBスキーマ: smart_dx_db (property/auth/system統合) / retail_db (DEMO用)
+- DBスキーマ: smart_dx_db (統合デプロイでは property/system/retail 全ドメイン) / retail_db (retail-be 単体起動 DEMO 専用)。詳細: ADR-006 追記
 - 全テーブルに tenant_id カラム必須
 - サービス間通信は REST or Redis Streams、tenant_id をHeader伝搬
 
@@ -52,16 +53,16 @@
 ## DB スキーマ管理
 - **system (sys_* テーブル)**: docs/db/smart_dx_db.sql
 - **property (property_* テーブル)**: smart-property-dx2/docs/design/db/property_business_schema_v0.4.sql
-- **retail**: smart-retail-dx/docs/design/db/ (該当あれば)
-- Flyway migration はドメイン固有テーブルには使用しない (既存DBとの互換性維持)
+- **retail (retail_* テーブル)**: apps/backend/services/retail-be/src/main/resources/db/migration/retail/ (Flyway migration が正本。統合デプロイでは smartdx.flyway.retail.enabled=true により smart_dx_db へ自動適用)
+- Flyway migration は retail を除くドメイン固有テーブルには使用しない (既存DBとの互換性維持)
 
 ## メモリ目標
 - 統合アプリ (smart-dx-app): 512〜768MB (全ドメイン合計)
 - 詳細は docs/ops/memory-tuning.md, docs/adr/006-modular-monolith-deployment.md
 
 ## 新BEサービス追加
-1. `services/<domain>-be/` に新規モジュール作成
-2. `app/pom.xml` に依存追加 (1行)
+1. `apps/backend/services/<domain>-be/` に新規モジュール作成
+2. `apps/backend/app/pom.xml` に依存追加 (1行)
 3. `SmartDxApplication` の `@MapperScan` に mapper パッケージ追加
 4. 詳細: docs/new-service-guide.md, docs/adr/006-modular-monolith-deployment.md
 

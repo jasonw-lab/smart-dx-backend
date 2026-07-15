@@ -2,6 +2,8 @@ package com.smartdx.retail.scheduler;
 
 import com.smartdx.retail.service.DeviceMonitorService;
 import com.smartdx.retail.service.PaymentDemoService;
+import com.smartdx.tenant.TenantContextHolder;
+import com.smartdx.tenant.TenantProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,6 +26,7 @@ public class DeviceMonitorScheduler {
 
     private final DeviceMonitorService deviceMonitorService;
     private final PaymentDemoService paymentDemoService;
+    private final TenantProperties tenantProperties;
 
     /**
      * デバイス監視処理を12時間毎に実行
@@ -34,8 +37,8 @@ public class DeviceMonitorScheduler {
         log.info("DeviceMonitorScheduler: Starting scheduled device monitoring...");
 
         try {
-            int totalAlerts = deviceMonitorService.runAllDeviceMonitoring();
-            int totalPayments = paymentDemoService.runDemoPayments();
+            int totalAlerts = runWithTenantContext(deviceMonitorService::runAllDeviceMonitoring);
+            int totalPayments = runWithTenantContext(paymentDemoService::runDemoPayments);
             log.info("DeviceMonitorScheduler: Completed. Generated {} alerts, {} demo payments.", totalAlerts, totalPayments);
         } catch (Exception e) {
             log.error("DeviceMonitorScheduler: Error during device monitoring", e);
@@ -49,9 +52,27 @@ public class DeviceMonitorScheduler {
      */
     public int runManually() {
         log.info("DeviceMonitorScheduler: Manual execution started...");
-        int totalAlerts = deviceMonitorService.runAllDeviceMonitoring();
-        int totalPayments = paymentDemoService.runDemoPayments();
+        int totalAlerts = runWithTenantContext(deviceMonitorService::runAllDeviceMonitoring);
+        int totalPayments = runWithTenantContext(paymentDemoService::runDemoPayments);
         log.info("DeviceMonitorScheduler: Manual execution completed. Generated {} alerts, {} demo payments.", totalAlerts, totalPayments);
         return totalAlerts;
+    }
+
+    /**
+     * スケジューラはリクエスト外で動くためテナントコンテキストが無い。
+     * retail は default テナント (sys_tenant id=1) 固定運用のため明示的に設定して実行する。
+     */
+    private int runWithTenantContext(java.util.function.IntSupplier task) {
+        Long previous = TenantContextHolder.getTenantId();
+        try {
+            TenantContextHolder.setTenantId(tenantProperties.getDefaultTenantId());
+            return task.getAsInt();
+        } finally {
+            if (previous != null) {
+                TenantContextHolder.setTenantId(previous);
+            } else {
+                TenantContextHolder.clear();
+            }
+        }
     }
 }
