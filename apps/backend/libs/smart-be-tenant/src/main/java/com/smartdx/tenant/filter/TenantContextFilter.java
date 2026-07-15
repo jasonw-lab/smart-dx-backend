@@ -65,6 +65,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
         for (TenantResolver resolver : resolvers) {
             Long tenantId = resolver.resolve(request);
             if (tenantId != null) {
+                warnOnHeaderMismatch(request, tenantId);
                 return tenantId;
             }
         }
@@ -78,5 +79,26 @@ public class TenantContextFilter extends OncePerRequestFilter {
 
         log.warn("Could not resolve tenant ID from request");
         return null;
+    }
+
+    /**
+     * 採用されたテナントID (通常は JWT 由来) と X-Tenant-Id ヘッダの矛盾を検知する。
+     * 優先順位により JWT が勝つため実害はないが、クライアント側の
+     * テナント指定ミスまたはなりすまし試行の兆候としてログに残す。
+     */
+    private void warnOnHeaderMismatch(HttpServletRequest request, Long resolvedTenantId) {
+        String headerValue = request.getHeader(properties.getHeaderName());
+        if (headerValue == null || headerValue.isBlank()) {
+            return;
+        }
+        try {
+            long headerTenantId = Long.parseLong(headerValue.trim());
+            if (headerTenantId != resolvedTenantId) {
+                log.warn("Tenant mismatch: resolved tenantId={} but header {}={} (uri={})",
+                        resolvedTenantId, properties.getHeaderName(), headerTenantId, request.getRequestURI());
+            }
+        } catch (NumberFormatException ignored) {
+            // 不正な形式は HeaderTenantResolver 側で警告済み
+        }
     }
 }

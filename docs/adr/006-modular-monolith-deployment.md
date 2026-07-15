@@ -192,3 +192,46 @@ API Gateway service を別途立てる構成。
 2. `application.yml` の merge 戦略 (`spring.config.import` vs profile 分離)
 3. domain 別 logger appender 分離の要否
 4. ArchUnit 導入タイミング (本 ADR 適用と同時 / 後続)
+
+---
+
+## 追記 (2026-07-15): 実装との差分確定・アーキテクチャレビュー対応
+
+`docs/.review/review_0715_architecture.claude.md` の指摘対応として、以下を正式決定する。
+
+### 1. DB 構成: 統合デプロイは単一 DB (smart_dx_db) に一本化 【指摘1】
+
+- 統合アプリ (smart-dx-app) の datasource は **smart_dx_db のみ**。retail 用の第2 datasource は設けない
+- retail_* テーブルは統合デプロイでは **smart_dx_db 内** に置く。DDL 正本は
+  `services/retail-be/src/main/resources/db/migration/retail/` (Flyway migration)
+- 統合アプリは `smartdx.flyway.retail.enabled=true` (既定) で起動時に retail スキーマを
+  smart_dx_db へ自動適用する (E2E テストと同一機構)
+- `retail_db` は **retail-be 単体起動 (DEMO) 専用** に限定する
+- 将来 retail のデータ隔離が必要になった場合は、SqlSessionFactory / TransactionManager を
+  モジュール別に分離する方式を別 ADR で決定する
+
+### 2. 実装が本 ADR から乖離した点 (実装側を正とする)
+
+| 項目 | ADR 記載 | 実装 (正) |
+|---|---|---|
+| bootstrap の scan | `scanBasePackages = "com.smartdx"` | `com.smartdx.app` のみ + AutoConfiguration.imports 方式 (Bean 衝突防止) |
+| bootstrap パッケージ | `com.smartdx.SmartDxApplication` | `com.smartdx.app.SmartDxApplication` |
+| auth-be | 独立 module | system-be に統合済み (ADR-013) |
+| URL prefix | `/api/<domain>/...` 必須 | retail のみ準拠。property/system はフラット URL (`/api/v1/properties` 等) のまま。**既存 API の互換性維持のため現状を許容**し、新規エンドポイントは domain prefix を必須とする |
+
+### 3. 運用制約の明文化 【指摘10】
+
+- 本構成は **単一インスタンス前提**。SSE セッションレジストリ・オンラインユーザ管理は
+  in-memory であり、水平スケール (レプリカ増) は **不可**
+- スケールが必要になる条件 (同時 SSE 接続数がインスタンス限界に達する等) を満たした場合、
+  SSE 配信を Redis Pub/Sub / Streams 経由に移行する (別 ADR)
+- モジュール境界は ArchUnit (`app/src/test/java/com/smartdx/app/ModularBoundaryArchTest.java`)
+  で CI 検証する (未決事項4の解消)
+
+### 4. セキュリティ運用 【指摘2/3/8】
+
+- `JWT_SECRET_KEY` はデフォルト値を持たない。未設定時はアプリ起動失敗 (fail-fast)、
+  docker compose も変数必須 (`:?`) とする
+- テスト用エンドポイントの Profile ガードは **ホワイトリスト方式** (`dev`/`e2e`/`test`) とする。
+  `!prod` のようなブラックリスト方式は禁止 (本番プロファイル名が `docker` 等の場合に漏れるため)
+- actuator の外部公開は `/actuator/health` のみ (nginx で遮断 + アプリ側も health 以外は認証必須)

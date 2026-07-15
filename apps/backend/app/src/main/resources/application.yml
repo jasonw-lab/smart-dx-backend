@@ -14,7 +14,10 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
-  # Database (shared smart_dx_db for property/system, retail_db uses separate datasource)
+  # Database: 統合デプロイ (modular monolith) では全ドメイン (property/system/retail) が
+  # この単一 datasource = smart_dx_db を使用する。retail_db は retail-be 単体起動 (DEMO) 専用。
+  # retail_* テーブルは retail Flyway (smartdx.flyway.retail.enabled=true) が smart_dx_db に
+  # 自動作成する (ADR-006 追記参照)。
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false&connectTimeout=5000&socketTimeout=15000
@@ -47,10 +50,17 @@ spring:
     redis:
       time-to-live: 3600000
 
-  # Flyway: 既定では全ドメイン無効 (DB スキーマは docs/db/smart_dx_db.sql で直接管理)。
-  # 各ドメインの FlywayConfig (Property/System/Retail) と V*.sql migration はサンプルとして保持。
-  # 利用する場合: smartdx.flyway.{property|system|retail}.enabled=true で有効化。
-  # FlywayAutoConfiguration は SmartDxApplication で除外済み。
+  # Flyway: sys_*/property_* は docs/db (および各正本SQL) で直接管理のため無効。
+  # retail のみ有効: retail_* テーブルの DDL 正本は
+  # services/retail-be/src/main/resources/db/migration/retail/ であり、
+  # 統合デプロイでは smart_dx_db に対して自動適用される (E2E と同一機構)。
+  # FlywayAutoConfiguration は SmartDxApplication で除外済み (各ドメインの FlywayConfig を使用)。
+
+# Domain-specific Flyway toggles
+smartdx:
+  flyway:
+    retail:
+      enabled: ${SMARTDX_FLYWAY_RETAIL_ENABLED:true}
 
 # MyBatis Plus
 mybatis-plus:
@@ -82,6 +92,9 @@ tenant:
     - sys_tenant_plan_menu
     - gen_table
     - gen_table_column
+    # FIXME(指摘11): retail_sales_detail は tenant_id カラムを持つ業務テーブルだが
+    # フィルタ除外されている (親 retail_sales はフィルタ対象で非対称)。
+    # 除外解除の影響検証は別タスク (docs/.review/review_0715_architecture.claude.md 指摘11)
     - retail_sales_detail
     # Flyway を有効化した場合用 (現在は未作成のテーブル、サンプルとして保持)
     - flyway_schema_history
@@ -96,7 +109,9 @@ security:
     access-token-time-to-live: 86400
     refresh-token-time-to-live: 604800
     jwt:
-      secret-key: ${JWT_SECRET_KEY:smartdx-shared-secret-key-2024-must-be-at-least-256-bits-long}
+      # デフォルト値なし: 未設定の場合 JwtTokenManager が起動時に fail-fast する。
+      # ローカル開発用のデフォルトは dev プロファイル (本ファイル末尾) でのみ定義。
+      secret-key: ${JWT_SECRET_KEY:}
   ignore-urls:
     - /api/v1/auth/**
     - /api/auth/login
@@ -106,14 +121,16 @@ security:
     - /swagger-ui/**
     - /v3/api-docs/**
     - /webjars/**
-    - /actuator/**
+    # actuator は health のみ無認証。metrics/prometheus は認証必須 (外部公開は nginx でも遮断)
     - /actuator/health
     - /actuator/health/**
   unsecured-urls:
     - /api/v1/auth/**
     - /api/v1/properties/search
     - /api/v1/properties/*/similar
-    - /api/v1/system/test-config  # E2Eテスト設定
+    # E2Eテスト設定: コントローラは dev/e2e/test プロファイル限定 (@Profile ホワイトリスト)。
+    # 本番プロファイルではエンドポイント自体が存在しない (404)。
+    - /api/v1/system/test-config
     - /actuator/health
     - /actuator/health/**
     - /v3/api-docs/**
@@ -205,3 +222,31 @@ logging:
     com.smartdx: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{tenantId}] [%X{requestId}] %-5level %logger{36} - %msg%n"
+
+---
+# ローカル開発 (dev) 専用: JWT_SECRET_KEY 未設定でも起動できるようデフォルト鍵を提供する。
+# この鍵は開発専用であり、本番系プロファイル (docker/prod) にはデフォルト値が無いため
+# JWT_SECRET_KEY 未設定なら起動に失敗する (fail-fast)。
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+security:
+  session:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY:smartdx-dev-only-secret-key-2024-must-be-at-least-256-bits-long}
+
+---
+# 本番系プロファイル (docker / prod): 起動時に全 Bean を初期化し、
+# 設定不備を初回リクエスト時ではなく起動時に検出する。
+spring:
+  config:
+    activate:
+      on-profile: docker, prod
+  main:
+    lazy-initialization: false
+
+logging:
+  level:
+    com.smartdx: INFO

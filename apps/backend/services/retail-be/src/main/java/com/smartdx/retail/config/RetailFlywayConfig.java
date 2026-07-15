@@ -9,13 +9,15 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 
 /**
- * Retail domain Flyway configuration (sample, disabled by default).
+ * Retail domain Flyway configuration.
  * <p>
- * DB スキーマは {@code docs/db/smart_dx_db.sql} で直接管理する運用。
- * このクラスと V1 migration は Flyway 利用が必要になった将来のためにサンプルとして残してある。
+ * retail_* テーブルの DDL 正本は {@code db/migration/retail/} の migration。
+ * 統合アプリ (smart-dx-app) では {@code smartdx.flyway.retail.enabled=true} が既定で、
+ * 起動時に単一 datasource (smart_dx_db) へ retail スキーマを適用する。
+ * retail-be 単体起動 (DEMO) では retail_db に対して spring.flyway (標準自動設定) を使用する。
  * </p>
  * <p>
- * Disabled by default. Enable with: smartdx.flyway.retail.enabled=true
+ * Enable/disable with: smartdx.flyway.retail.enabled
  * </p>
  */
 @Configuration

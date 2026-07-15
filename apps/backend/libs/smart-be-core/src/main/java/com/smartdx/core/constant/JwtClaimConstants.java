@@ -7,7 +7,10 @@ package com.smartdx.core.constant;
  *
  * @author haoxr
  * @since 2023/11/24
+ * @deprecated {@code com.smartdx.security.constant.JwtClaimConstants} を使用すること。
+ *             smart-be-security 側が正本。値のドリフトを防ぐため次リリースで削除予定。
  */
+@Deprecated(forRemoval = true)
 public interface JwtClaimConstants {
 
     /**

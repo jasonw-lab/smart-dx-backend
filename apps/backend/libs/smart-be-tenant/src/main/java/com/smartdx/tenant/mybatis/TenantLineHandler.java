@@ -53,14 +53,12 @@ public class TenantLineHandler implements com.baomidou.mybatisplus.extension.plu
         log.debug("Got tenant ID from TenantContextHolder: {}", tenantId);
 
         if (tenantId == null) {
-            // デフォルトテナントIDにフォールバック
-            Long defaultId = tenantProperties.getDefaultTenantId();
-            if (defaultId != null) {
-                log.debug("TenantId is null, falling back to default: {}", defaultId);
-                return new LongValue(defaultId);
-            }
+            // マルチテナントモードではデフォルトへ暗黙フォールバックしない (fail-fast)。
+            // コンテキスト未設定のまま DB アクセスするのは、非同期/スケジューラ等での
+            // 伝搬漏れバグであり、デフォルトテナントへの誤読み書きより例外の方が安全。
             throw new IllegalStateException(
-                    "TenantId is required but was null. Ensure TenantContextHolder is set (e.g., via token) before DB access."
+                    "TenantId is required but was null. Ensure TenantContextHolder is set "
+                            + "(via request filter, or explicitly for async/scheduled tasks) before DB access."
             );
         }
 
