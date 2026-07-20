@@ -1,6 +1,7 @@
 package com.smartdx.retail.e2e;
 
 import com.redis.testcontainers.RedisContainer;
+import com.smartdx.tenant.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,12 +67,16 @@ public abstract class RetailE2EBase {
 
     @BeforeEach
     void baseSetUp() {
+        // サービス層直呼びテストはリクエストフィルタを通らないため、
+        // TenantLineInnerInterceptor 用のテナントを明示設定する（seed の tenant_id=1 と一致）
+        TenantContextHolder.setTenantId(1L);
         cleanRetailTables();
     }
 
     @AfterEach
     void baseTearDown() {
         cleanRetailTables();
+        TenantContextHolder.clear();
     }
 
     private void cleanRetailTables() {
