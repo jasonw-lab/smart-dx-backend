@@ -2,18 +2,25 @@ package com.smartdx.retail.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.smartdx.core.exception.BusinessException;
+import com.smartdx.retail.exception.InventoryShortageException;
 import com.smartdx.retail.mapper.InventoryMapper;
+import com.smartdx.retail.mapper.InventoryTransactionMapper;
 import com.smartdx.retail.mapper.ProductMapper;
 import com.smartdx.retail.mapper.StoreMapper;
 import com.smartdx.retail.model.entity.Inventory;
+import com.smartdx.retail.model.entity.InventoryTransaction;
 import com.smartdx.retail.model.entity.Product;
 import com.smartdx.retail.model.entity.Store;
+import com.smartdx.retail.model.form.InventoryDiscardForm;
 import com.smartdx.retail.model.vo.InventoryPageVO;
 import com.smartdx.retail.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +37,7 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
 
     private final StoreMapper storeMapper;
     private final ProductMapper productMapper;
+    private final InventoryTransactionMapper inventoryTransactionMapper;
 
     @Override
     public List<InventoryPageVO> listInventories(Long storeId, Long productId) {
@@ -65,6 +73,41 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
     @Override
     public boolean deleteInventory(Long id) {
         return this.removeById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean discardInventory(Long inventoryId, InventoryDiscardForm form) {
+        // 対象ロットを排他ロックして取得（同時更新による残量不整合を防ぐ）
+        Inventory inventory = this.baseMapper.selectForUpdate(inventoryId);
+        if (inventory == null) {
+            throw new BusinessException("対象の在庫ロットが存在しません: id=" + inventoryId);
+        }
+
+        int currentQty = inventory.getQuantity() == null ? 0 : inventory.getQuantity();
+        if (form.getQuantity() > currentQty) {
+            throw new InventoryShortageException(
+                    "在庫残量が不足しています（current=" + currentQty + ", requested=" + form.getQuantity() + "）");
+        }
+
+        // ロット数量減算と DISPOSAL 履歴登録を同一トランザクションで行う
+        inventory.setQuantity(currentQty - form.getQuantity());
+        this.baseMapper.updateById(inventory);
+
+        InventoryTransaction transaction = new InventoryTransaction();
+        transaction.setInventoryId(inventory.getId());
+        transaction.setStoreId(inventory.getStoreId());
+        transaction.setProductId(inventory.getProductId());
+        transaction.setLotNumber(inventory.getLotNumber());
+        transaction.setTxnType("DISPOSAL");
+        transaction.setQuantityDelta(-form.getQuantity());
+        transaction.setSourceType("MANUAL");
+        transaction.setReason(form.getReason());
+        transaction.setNote(form.getRemarks());
+        transaction.setOccurredAt(LocalDateTime.now());
+        inventoryTransactionMapper.insert(transaction);
+
+        return true;
     }
 
     private List<InventoryPageVO> toPageVO(List<Inventory> inventories) {
