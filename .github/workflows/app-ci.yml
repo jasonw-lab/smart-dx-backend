@@ -1,0 +1,49 @@
+name: App (Modular Monolith) CI
+
+# 統合アプリの検証:
+# - 全モジュールを含む fat jar のビルド (統合して初めて壊れる依存/Bean問題の早期検出)
+# - ArchUnit によるモジュール境界検証 (ADR-006)
+# Testcontainers ベースの統合テスト (MultiTenantIntegrationTest 等) はローカル実行前提
+# (app/pom.xml の surefire が orbstack ソケット固定のため)。CI 実行化は別タスク。
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/app-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/app-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build unified fat jar with architecture tests
+        run: |
+          mvn -f apps/backend/pom.xml clean package \
+            -pl app \
+            -am \
+            -Dtest='ModularBoundaryArchTest' \
+            -Dsurefire.failIfNoSpecifiedTests=false \
+            --batch-mode
+
+      - name: Upload fat jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-dx-app-jar
+          path: apps/backend/app/target/smart-dx-app.jar
+          retention-days: 7

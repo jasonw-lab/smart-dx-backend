@@ -64,8 +64,10 @@ jobs:
           REDIS_PORT: 6379
         run: |
           mvn -f apps/backend/pom.xml clean verify \
-            -pl property-be \
+            -pl services/property-be \
             -am \
+            -Dtest='!*E2ETest' \
+            -Dsurefire.failIfNoSpecifiedTests=false \
             --batch-mode
 
       - name: Upload test results

@@ -61,6 +61,7 @@ p-*.md
 .review/
 docs/.review/
 docs/biz/
+docs/learning/
 *.bak
 .agents
 /skills-lock.json

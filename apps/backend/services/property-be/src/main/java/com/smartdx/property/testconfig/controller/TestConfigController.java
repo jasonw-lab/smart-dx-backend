@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * E2Eテスト設定コントローラー
  *
- * 本番環境では無効化される
+ * テスト系プロファイル (dev / e2e / test) でのみ有効。
+ * ブラックリスト方式 (!prod) だと本番が docker 等の別プロファイルで起動した際に
+ * 有効化されてしまうため、必ずホワイトリスト方式で指定する。
  */
 @Tag(name = "システムテスト設定")
 @RestController
 @RequestMapping("/api/v1/system/test-config")
-@Profile("!prod")
+@Profile({"dev", "e2e", "test"})
 @RequiredArgsConstructor
 @Slf4j
 public class TestConfigController {

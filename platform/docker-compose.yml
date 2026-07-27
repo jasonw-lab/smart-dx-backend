@@ -78,7 +78,8 @@ services:
       - REDIS_PORT=6379
       - OPENSEARCH_HOST=opensearch
       - OPENSEARCH_PORT=9200
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-smartdx-shared-secret-key-2024-must-be-at-least-256-bits-long}
+      # 必須: 未設定なら docker compose が起動を拒否する (既知のデフォルト鍵での稼働を防止)
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set (256bit 以上のランダム値)}
       - CAPTCHA_REQUIRED=${CAPTCHA_REQUIRED:-false}
     depends_on:
       mysql:

@@ -44,6 +44,11 @@ public class InventoryTransaction implements Serializable {
      */
     private String sourceType;
 
+    /**
+     * 理由（廃棄理由等の監査用自由記述、最大100文字）
+     */
+    private String reason;
+
     private String referenceNo;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
