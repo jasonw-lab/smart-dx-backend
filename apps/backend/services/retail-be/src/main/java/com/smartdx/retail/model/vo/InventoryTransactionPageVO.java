@@ -45,6 +45,9 @@ public class InventoryTransactionPageVO {
     @Schema(description = "操作元（MANUAL, POS, BATCH）")
     private String sourceType;
 
+    @Schema(description = "理由（廃棄理由等）")
+    private String reason;
+
     @Schema(description = "参照番号（売上ID、発注番号等）")
     private String referenceNo;
 

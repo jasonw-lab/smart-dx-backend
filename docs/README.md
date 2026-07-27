@@ -5,6 +5,7 @@
 ```
 docs/
 ├── README.md                  # このファイル
+├── api-interface-design.html  # 統合 API インタフェース設計書
 ├── naming-convention.md       # 命名規則
 ├── new-service-guide.md       # 新サービス追加手順
 ├── architecture/
@@ -43,5 +44,6 @@ docs/
 
 - [アーキテクチャ概要](architecture/overview.md)
 - [マルチテナント設計](architecture/multi-tenant.md)
+- [API インタフェース設計書](api-interface-design.html)
 - [新サービス追加ガイド](new-service-guide.md)
 - [運用手順書](ops/runbook.md)

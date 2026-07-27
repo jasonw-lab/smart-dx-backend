@@ -44,10 +44,21 @@ public class JwtTokenManager implements TokenManager {
     private final RedisTemplate<String, Object> redisTemplate;
     private final byte[] secretKey;
 
+    /** HMAC-SHA256 の最低鍵長 (256bit = 32byte) */
+    private static final int MIN_SECRET_KEY_LENGTH = 32;
+
     public JwtTokenManager(SecurityProperties securityProperties, RedisTemplate<String, Object> redisTemplate) {
         this.securityProperties = securityProperties;
         this.redisTemplate = redisTemplate;
-        this.secretKey = securityProperties.getSession().getJwt().getSecretKey().getBytes();
+        String secret = securityProperties.getSession().getJwt().getSecretKey();
+        // 秘密鍵未設定のまま起動させない (fail-fast)。デフォルト値へのフォールバックは
+        // トークン偽造 = テナント越境に直結するため許容しない。
+        if (StrUtil.isBlank(secret) || secret.getBytes().length < MIN_SECRET_KEY_LENGTH) {
+            throw new IllegalStateException(
+                    "JWT secret key is missing or shorter than 256 bits. "
+                            + "Set the JWT_SECRET_KEY environment variable (security.session.jwt.secret-key).");
+        }
+        this.secretKey = secret.getBytes();
     }
 
     @Override

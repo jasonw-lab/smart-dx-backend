@@ -29,12 +29,14 @@ public class TenantAspect {
      */
     @Around("@annotation(ignoreTenant) || @within(ignoreTenant)")
     public Object around(ProceedingJoinPoint joinPoint, IgnoreTenant ignoreTenant) throws Throwable {
+        // ネスト呼び出しで外側スコープのフラグを壊さないよう前値を退避して復元する
+        boolean previous = TenantContextHolder.isIgnoreTenant();
         try {
             TenantContextHolder.setIgnoreTenant(true);
             log.debug("Method {} ignoring tenant filter", joinPoint.getSignature().getName());
             return joinPoint.proceed();
         } finally {
-            TenantContextHolder.setIgnoreTenant(false);
+            TenantContextHolder.setIgnoreTenant(previous);
         }
     }
 }

@@ -42,6 +42,10 @@ public class InventoryTransactionForm {
     @Schema(description = "操作元（MANUAL, POS, BATCH）")
     private String sourceType;
 
+    @Schema(description = "理由（廃棄理由等、任意）")
+    @Size(max = 100, message = "理由は100文字以内で入力してください")
+    private String reason;
+
     @Schema(description = "参照番号（売上ID、発注番号等）")
     @Size(max = 100, message = "参照番号は100文字以内で入力してください")
     private String referenceNo;
