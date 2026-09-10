@@ -7,13 +7,14 @@
   <title>Smart DX Backend API インタフェース設計書</title>
   <style>
     :root {
-      --bg: #f5f7fb;
+      --bg: #f8fafc;
       --panel: #fff;
-      --ink: #172033;
-      --muted: #667085;
-      --line: #d9dfeb;
-      --brand: #155eef;
-      --brand-soft: #eff4ff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --brand: #008f83;
+      --brand-strong: #006f66;
+      --brand-soft: #e8f8f5;
       --success: #047857;
       --success-soft: #ecfdf3;
       --warning: #9a5b00;
@@ -21,6 +22,9 @@
       --danger: #b42318;
       --danger-soft: #fef3f2;
       --code: #1f2937;
+      --sidebar-width: 280px;
+      --toc-width: 310px;
+      --shadow: 0 4px 20px -2px rgb(15 23 42 / 7%), 0 2px 6px -1px rgb(15 23 42 / 4%);
     }
 
     * { box-sizing: border-box; }
@@ -33,24 +37,55 @@
       line-height: 1.65;
     }
 
-    .layout { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; }
-    aside {
-      position: sticky;
-      top: 0;
+    .layout { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 30;
+      width: var(--sidebar-width);
       height: 100vh;
       overflow: auto;
-      padding: 24px 18px;
-      background: #101828;
-      color: #f8fafc;
+      padding: 20px 16px;
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
     }
-    .product { margin: 0 0 26px; font-size: 18px; line-height: 1.35; }
-    .product span { display: block; margin-bottom: 5px; color: #98a2b3; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
-    aside a { display: block; padding: 7px 8px; border-radius: 6px; color: #d0d5dd; font-size: 14px; text-decoration: none; }
-    aside a:hover, aside a:focus { background: #344054; color: #fff; outline: none; }
-    aside .nav-heading { margin: 18px 8px 5px; color: #98a2b3; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .brand-header { display: flex; align-items: center; gap: 12px; padding: 0 2px 18px; border-bottom: 1px solid var(--line); }
+    .brand-icon { display: grid; flex: 0 0 38px; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: linear-gradient(135deg, var(--brand), #005b52); color: #fff; box-shadow: 0 2px 8px rgb(0 143 131 / 28%); font-size: 15px; font-weight: 800; }
+    .product { margin: 0; font-size: 16px; line-height: 1.3; }
+    .product span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: .03em; }
+    .sidebar-nav { margin-top: 16px; }
+    .sidebar a { display: flex; align-items: center; gap: 8px; margin: 2px 0; padding: 8px 10px; border-radius: 5px; color: var(--muted); font-size: 13px; text-decoration: none; transition: background .15s ease, color .15s ease; }
+    .sidebar a::before { width: 17px; color: var(--brand); font-family: ui-monospace, monospace; font-size: 10px; font-weight: 800; content: attr(data-index); }
+    .sidebar a:hover, .sidebar a:focus { background: #f1f5f9; color: var(--brand-strong); outline: none; }
+    .sidebar a.active { background: var(--brand-soft); color: var(--brand-strong); font-weight: 700; }
+    .sidebar .nav-heading { margin: 18px 10px 6px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 
-    main { width: 100%; max-width: 1480px; padding: 34px; }
-    .hero, section { margin-bottom: 22px; padding: 26px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 1px 2px rgb(16 24 40 / 3%); }
+    .toc {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 20;
+      width: var(--toc-width);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 15px 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .toc-title { color: var(--brand); font-size: 13px; font-weight: 800; }
+    .toc-subtitle { margin: 2px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .toc-list, .toc-list ul { margin: 0; padding: 0; list-style: none; }
+    .toc-list { display: grid; gap: 3px; }
+    .toc-list ul { margin: 2px 0 4px 9px; padding-left: 10px; border-left: 2px solid var(--line); }
+    .toc a { display: block; overflow: hidden; padding: 5px 7px; border-radius: 4px; color: var(--ink); font-size: 12px; font-weight: 700; line-height: 1.4; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; transition: background .15s ease, color .15s ease; }
+    .toc ul ul a { padding: 4px 6px; color: var(--muted); font-size: 11px; font-weight: 500; }
+    .toc a:hover, .toc a.active { background: var(--brand-soft); color: var(--brand-strong); }
+
+    main { width: calc(100% - var(--sidebar-width) - var(--toc-width) - 54px); margin-left: var(--sidebar-width); padding: 34px 28px; }
+    .hero, section { margin-bottom: 22px; padding: 26px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 1px 3px rgb(15 23 42 / 5%); }
     .hero { border-top: 4px solid var(--brand); }
     .eyebrow { margin: 0 0 7px; color: var(--brand); font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
     h1, h2, h3 { line-height: 1.3; }
@@ -99,18 +134,25 @@
     details { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px; }
     summary { padding: 11px 13px; cursor: pointer; color: #344054; font-weight: 700; }
     details > div { padding: 0 14px 14px; }
-    a { color: #155eef; }
+    a { color: var(--brand-strong); }
     .source-list { margin: 0; padding-left: 20px; }
     .revision td { vertical-align: middle; }
     footer { margin: 28px 0 4px; color: var(--muted); font-size: 12px; }
 
+    section, header, h2, h3, .domain { scroll-margin-top: 18px; }
+
+    @media (max-width: 1480px) {
+      .toc { display: none; }
+      main { width: calc(100% - var(--sidebar-width)); }
+    }
     @media (max-width: 920px) {
       .layout { display: block; }
-      aside { position: static; height: auto; padding: 16px; }
-      aside a { display: inline-block; }
-      aside .nav-heading { display: none; }
-      .product { margin-bottom: 8px; }
-      main { padding: 18px; }
+      .sidebar { position: static; width: 100%; height: auto; padding: 14px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .brand-header { padding-bottom: 12px; }
+      .sidebar-nav { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 10px; }
+      .sidebar a { display: inline-flex; margin: 0; padding: 6px 8px; }
+      .sidebar .nav-heading { display: none; }
+      main { width: 100%; margin-left: 0; padding: 18px; }
       .summary, .grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 580px) {
@@ -122,8 +164,8 @@
     }
     @media print {
       body { background: #fff; }
-      aside, .catalog-controls { display: none; }
-      main { max-width: none; padding: 0; }
+      .sidebar, .toc, .catalog-controls { display: none; }
+      main { width: 100%; max-width: none; margin-left: 0; padding: 0; }
       .hero, section { break-inside: avoid; box-shadow: none; }
       th { position: static; }
     }
@@ -131,20 +173,33 @@
 </head>
 <body>
   <div class="layout">
-    <aside aria-label="目次">
-      <h1 class="product"><span>Smart DX Backend</span>API 設計書</h1>
-      <a href="#overview">概要・利用方法</a>
-      <a href="#common">共通インタフェース</a>
-      <a href="#security">認証・テナント</a>
-      <p class="nav-heading">API カタログ</p>
-      <a href="#property">Property</a>
-      <a href="#system">System</a>
-      <a href="#retail">Retail</a>
-      <p class="nav-heading">補足</p>
-      <a href="#models">主要モデル・例</a>
-      <a href="#consistency">仕様整合性</a>
-      <a href="#sources">正本・改訂履歴</a>
+    <aside class="sidebar" aria-label="サイドメニュー">
+      <div class="brand-header">
+        <div class="brand-icon" aria-hidden="true">DX</div>
+        <h1 class="product">Smart DX Backend<span>API Interface Design</span></h1>
+      </div>
+      <nav class="sidebar-nav" aria-label="主要セクション">
+        <p class="nav-heading">Guide</p>
+        <a href="#overview" data-index="01">概要</a>
+        <a href="#reading" data-index="02">設計書の読み方</a>
+        <a href="#common" data-index="03">共通インタフェース</a>
+        <a href="#security" data-index="04">認証・テナント</a>
+        <p class="nav-heading">API Catalog</p>
+        <a href="#property" data-index="P">Property</a>
+        <a href="#system" data-index="S">System</a>
+        <a href="#retail" data-index="R">Retail</a>
+        <p class="nav-heading">Reference</p>
+        <a href="#models" data-index="05">主要モデル・例</a>
+        <a href="#consistency" data-index="06">仕様整合性</a>
+        <a href="#sources" data-index="07">正本・改訂履歴</a>
+      </nav>
     </aside>
+
+    <nav class="toc" aria-label="ページ内目次">
+      <div class="toc-title">ページ内目次</div>
+      <div class="toc-subtitle">見出しを選択して移動</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </nav>
 
     <main>
       <header class="hero" id="overview">
@@ -159,7 +214,7 @@
         </div>
       </header>
 
-      <section>
+      <section id="reading">
         <h2>この設計書の読み方</h2>
         <div class="grid">
           <div class="card">
@@ -397,11 +452,11 @@ Content-Type: application/json
         <p>Controller のパス・HTTP メソッド・リクエスト/レスポンス DTO・認可条件を変更した場合は、本書の該当カタログ行、モデル説明、仕様整合性欄および改訂履歴を同じ変更で更新します。DTO の全フィールド変更は SpringDoc/Knife4j の表示も確認します。</p>
         <div class="table-wrap revision"><table>
           <thead><tr><th>日付</th><th>改訂者</th><th>内容</th></tr></thead>
-          <tbody><tr><td>2026/07/14</td><td>codex</td><td>Controller 実装、共通応答、認証・テナント設定を基に、統合 API インタフェース設計書を新規作成。</td></tr><tr><td>2026/07/20</td><td>kimi</td><td>ADR-011 に基づく在庫 API 拡張。GET /api/v1/retail/inventory-summaries（店舗×商品集約、読取専用）と POST /api/v1/retail/inventories/{inventoryId}/discard を追加。入出庫履歴に任意の reason フィールドを追加（InventoryTransactionForm / InventoryTransactionPageVO / retail_inventory_transaction テーブル）。</td></tr></tbody>
+          <tbody><tr><td>2026/07/14</td><td>codex</td><td>Controller 実装、共通応答、認証・テナント設定を基に、統合 API インタフェース設計書を新規作成。</td></tr><tr><td>2026/07/20</td><td>kimi</td><td>ADR-011 に基づく在庫 API 拡張。GET /api/v1/retail/inventory-summaries（店舗×商品集約、読取専用）と POST /api/v1/retail/inventories/{inventoryId}/discard を追加。入出庫履歴に任意の reason フィールドを追加（InventoryTransactionForm / InventoryTransactionPageVO / retail_inventory_transaction テーブル）。</td></tr><tr><td>2026/08/24</td><td>codex</td><td>固定サイドメニュー、ページ内 TOC、スクロール連動の現在位置表示、レスポンシブレイアウトを追加し、ティール系の配色へ更新。</td></tr></tbody>
         </table></div>
       </section>
 
-      <footer>Smart DX Backend / API Interface Design — HTML 単体で閲覧可能。最終確認: 2026/07/14</footer>
+      <footer>Smart DX Backend / API Interface Design — HTML 単体で閲覧可能。最終確認: 2026/08/24</footer>
     </main>
   </div>
   <script>
@@ -426,8 +481,88 @@ Content-Type: application/json
         count.textContent = `${visible} 件の API グループを表示`;
       }
 
+      function buildToc() {
+        const tocList = document.getElementById('toc-list');
+        const topLevel = [...document.querySelectorAll('main > header[id], main > section[id]')];
+
+        topLevel.forEach((container) => {
+          const heading = container.querySelector(':scope > h1, :scope > h2');
+          if (!heading) return;
+
+          const item = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = `#${container.id}`;
+          link.textContent = heading.textContent.trim();
+          link.dataset.target = container.id;
+          item.appendChild(link);
+
+          const subheadings = [...container.querySelectorAll('h3')];
+          if (subheadings.length) {
+            const sublist = document.createElement('ul');
+            subheadings.forEach((subheading, index) => {
+              if (!subheading.id) {
+                const domain = subheading.closest('.domain[id]');
+                subheading.id = domain ? `${domain.id}-details` : `${container.id}-topic-${index + 1}`;
+              }
+              const subitem = document.createElement('li');
+              const sublink = document.createElement('a');
+              sublink.href = `#${subheading.id}`;
+              sublink.textContent = subheading.textContent.trim();
+              sublink.dataset.target = subheading.id;
+              subitem.appendChild(sublink);
+              sublist.appendChild(subitem);
+            });
+            item.appendChild(sublist);
+          }
+          tocList.appendChild(item);
+        });
+      }
+
+      function updateActiveNavigation() {
+        const targets = [...document.querySelectorAll('#toc-list a')]
+          .map((link) => document.getElementById(link.dataset.target))
+          .filter(Boolean);
+        let current = targets[0];
+        targets.forEach((target) => {
+          if (target.getBoundingClientRect().top <= 120) current = target;
+        });
+        if (!current) return;
+
+        document.querySelectorAll('#toc-list a').forEach((link) => {
+          const active = link.dataset.target === current.id;
+          link.classList.toggle('active', active);
+          if (active) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+
+        const domain = current.closest('.domain[id]');
+        const section = current.closest('section[id], header[id]');
+        const sidebarTarget = domain?.id || section?.id || current.id;
+        document.querySelectorAll('.sidebar-nav a').forEach((link) => {
+          const active = link.getAttribute('href') === `#${sidebarTarget}`;
+          link.classList.toggle('active', active);
+          if (active) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+      }
+
+      let navigationFrame;
+      function scheduleNavigationUpdate() {
+        if (navigationFrame) return;
+        navigationFrame = requestAnimationFrame(() => {
+          updateActiveNavigation();
+          navigationFrame = null;
+        });
+      }
+
       filter.addEventListener('input', applyFilter);
+      buildToc();
       applyFilter();
+      updateActiveNavigation();
+      window.addEventListener('scroll', scheduleNavigationUpdate, { passive: true });
+
+      const initialHashTarget = document.getElementById(location.hash.slice(1));
+      if (initialHashTarget) requestAnimationFrame(() => initialHashTarget.scrollIntoView());
     })();
   </script>
 </body>
