@@ -5,6 +5,25 @@
 > 全プロジェクト共通ルールは `~/ai-rules/*`（例: `~/ai-rules/ai-common.md`）を参照してください。本ファイルは `smart-dx-backend` 固有ルールを定義します。
 > ドキュメントは日本語が中心です。コメント・ドキュメント・レビュー記録も日本語で記述してください。
 
+## Git リモート運用方針（GitHub 復旧までの暫定措置）
+
+> [!IMPORTANT]
+> GitHub アカウント一時停止中のため、復旧まで **GitLab (`demolist`) を主リモートとして運用** します。
+> `origin` (GitHub) への Push は禁止し、必ず `gitlab` を使用してください。
+
+- **GitLab リポジトリ**: `git@gitlab.com:demolist/smart-dx-backend.git`
+- **Push 先**: デフォルトは `gitlab`（`git config remote.pushDefault gitlab` 設定済み）。
+- **CLI からの MR 直接発行（Web UI 操作不要）**:
+  フィーチャーブランチから `develop` への MR は Git Push Options を使って CLI から直接作成する:
+  ```bash
+  git push gitlab <ブランチ名> \
+    -o merge_request.create \
+    -o merge_request.target=develop \
+    -o merge_request.title="<MRタイトル>" \
+    -o merge_request.description="<MR詳細説明>"
+  ```
+- **承認・マージ**: 人間がレビュー・マージを実施する。
+
 ---
 
 ## プロジェクト概要 (Project Overview)
