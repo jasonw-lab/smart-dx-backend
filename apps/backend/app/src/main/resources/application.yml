@@ -1,9 +1,9 @@
 server:
   port: 8080
 
-# Dotenv configuration - load .env from apps/backend/app/
+# Dotenv configuration - load .env from current dir, parent dir, or apps/backend/app/
 env:
-  location: file:apps/backend/app/.env
+  location: file:.env,file:../.env,file:apps/backend/app/.env
   ignore-missing: true
 
 spring:
@@ -22,7 +22,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:smart_dx_db}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Tokyo&allowPublicKeyRetrieval=true&useSSL=false&connectTimeout=5000&socketTimeout=15000
     username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    password: ${MYSQL_PASSWORD:123456}
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
       initial-size: 5
@@ -41,7 +41,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:123456}
       database: 0
 
   # Cache
@@ -231,6 +231,15 @@ spring:
   config:
     activate:
       on-profile: dev
+  devtools:
+    restart:
+      enabled: true
+      poll-interval: 500ms
+      quiet-period: 200ms
+      additional-paths:
+        - ../services/retail-be/target/classes
+        - ../services/system-be/target/classes
+        - ../services/property-be/target/classes
 
 security:
   session:
