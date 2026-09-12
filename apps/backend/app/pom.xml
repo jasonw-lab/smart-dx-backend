@@ -50,6 +50,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- Hot Reload for local development (M5 Mac) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>
@@ -101,6 +108,13 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <folders>
+                        <folder>${project.basedir}/../services/retail-be/target/classes</folder>
+                        <folder>${project.basedir}/../services/system-be/target/classes</folder>
+                        <folder>${project.basedir}/../services/property-be/target/classes</folder>
+                    </folders>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
