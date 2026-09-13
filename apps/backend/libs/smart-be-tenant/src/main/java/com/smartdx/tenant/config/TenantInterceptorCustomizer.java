@@ -62,5 +62,12 @@ public class TenantInterceptorCustomizer implements InitializingBean {
         } else {
             log.debug("TenantLineInnerInterceptor already registered");
         }
+
+        boolean hasPaginationInterceptor = innerInterceptors.stream()
+                .anyMatch(i -> i instanceof com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor);
+        if (!hasPaginationInterceptor) {
+            innerInterceptors.add(new com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor(com.baomidou.mybatisplus.annotation.DbType.MYSQL));
+            log.info("Added PaginationInnerInterceptor to existing MybatisPlusInterceptor");
+        }
     }
 }
