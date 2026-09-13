@@ -126,7 +126,8 @@ public class TenantAutoConfiguration {
     public MybatisPlusInterceptor mybatisPlusInterceptor(TenantLineHandler tenantLineHandler) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(tenantLineHandler));
-        log.info("Created MybatisPlusInterceptor with TenantLineInnerInterceptor");
+        interceptor.addInnerInterceptor(new com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor(com.baomidou.mybatisplus.annotation.DbType.MYSQL));
+        log.info("Created MybatisPlusInterceptor with TenantLineInnerInterceptor and PaginationInnerInterceptor");
         return interceptor;
     }
 }
