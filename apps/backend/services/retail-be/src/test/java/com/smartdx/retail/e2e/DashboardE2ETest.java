@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,5 +68,29 @@ class DashboardE2ETest extends RetailE2EBase {
         // Growth rate: (1200 - 800) / 800 * 100 = 50.00
         assertThat((BigDecimal) kpi.get("salesGrowthRate"))
                 .isEqualByComparingTo(BigDecimal.valueOf(50.00));
+    }
+
+    @Test
+    void getSalesTrend_monthly_returnsTwelveMonths() {
+        // Given
+        Long store1 = seedStore("S009", "千葉店", "ONLINE");
+        seedSales(store1, "ORD-030", "CARD", LocalDateTime.of(2026, 1, 15, 12, 0), BigDecimal.valueOf(10000));
+        seedSales(store1, "ORD-031", "CASH", LocalDateTime.of(2026, 2, 15, 12, 0), BigDecimal.valueOf(15000));
+        seedSales(store1, "ORD-032", "QR", LocalDateTime.of(2026, 12, 15, 12, 0), BigDecimal.valueOf(20000));
+
+        // When
+        List<Map<String, Object>> trend = dashboardService.getSalesTrend(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31),
+                "month"
+        );
+
+        // Then
+        assertThat(trend).hasSize(12);
+        assertThat(trend.get(0).get("date")).isEqualTo("2026/1");
+        assertThat(trend.get(11).get("date")).isEqualTo("2026/12");
+        assertThat((BigDecimal) trend.get(0).get("salesAmount")).isEqualByComparingTo(BigDecimal.valueOf(10000));
+        assertThat((BigDecimal) trend.get(1).get("salesAmount")).isEqualByComparingTo(BigDecimal.valueOf(15000));
+        assertThat((BigDecimal) trend.get(11).get("salesAmount")).isEqualByComparingTo(BigDecimal.valueOf(20000));
     }
 }
