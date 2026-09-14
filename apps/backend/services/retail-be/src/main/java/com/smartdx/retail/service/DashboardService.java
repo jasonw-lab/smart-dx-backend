@@ -12,4 +12,8 @@ public interface DashboardService {
     Map<String, Object> getKpi();
 
     List<Map<String, Object>> getSalesTrend(LocalDate startDate, LocalDate endDate);
+
+    default List<Map<String, Object>> getSalesTrend(LocalDate startDate, LocalDate endDate, String interval) {
+        return getSalesTrend(startDate, endDate);
+    }
 }

@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,6 +82,62 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public List<Map<String, Object>> getSalesTrend(LocalDate startDate, LocalDate endDate) {
+        return getSalesTrend(startDate, endDate, "day");
+    }
+
+    @Override
+    public List<Map<String, Object>> getSalesTrend(LocalDate startDate, LocalDate endDate, String interval) {
+        if ("month".equalsIgnoreCase(interval)) {
+            LocalDate end = endDate != null ? endDate : LocalDate.of(2026, 12, 31);
+            LocalDate start = startDate != null ? startDate : LocalDate.of(end.getYear(), 1, 1);
+
+            LocalDateTime rangeStart = start.atStartOfDay();
+            LocalDateTime rangeEnd = end.plusDays(1).atStartOfDay();
+
+            LambdaQueryWrapper<Sales> salesQuery = new LambdaQueryWrapper<Sales>()
+                    .ge(Sales::getSaleTimestamp, rangeStart)
+                    .lt(Sales::getSaleTimestamp, rangeEnd);
+            List<Sales> salesList = salesMapper.selectList(salesQuery);
+
+            YearMonth startYm = YearMonth.from(start);
+            YearMonth endYm = YearMonth.from(end);
+
+            TreeMap<YearMonth, BigDecimal> monthlyTotals = new TreeMap<>();
+            for (YearMonth ym = startYm; !ym.isAfter(endYm); ym = ym.plusMonths(1)) {
+                monthlyTotals.put(ym, BigDecimal.ZERO);
+            }
+
+            for (Sales sale : salesList) {
+                if (sale.getSaleTimestamp() == null || sale.getTotalAmount() == null) {
+                    continue;
+                }
+                YearMonth ym = YearMonth.from(sale.getSaleTimestamp().toLocalDate());
+                if (monthlyTotals.containsKey(ym)) {
+                    monthlyTotals.merge(ym, sale.getTotalAmount(), BigDecimal::add);
+                }
+            }
+
+            List<Map<String, Object>> result = new ArrayList<>(monthlyTotals.size());
+            BigDecimal prevAmount = null;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/M");
+            for (Map.Entry<YearMonth, BigDecimal> entry : monthlyTotals.entrySet()) {
+                BigDecimal amount = entry.getValue();
+                BigDecimal growthRate = BigDecimal.ZERO;
+                if (prevAmount != null && prevAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    growthRate = amount.subtract(prevAmount)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(prevAmount, 2, RoundingMode.HALF_UP);
+                }
+                Map<String, Object> item = new HashMap<>();
+                item.put("date", entry.getKey().format(formatter));
+                item.put("salesAmount", amount);
+                item.put("growthRate", growthRate);
+                result.add(item);
+                prevAmount = amount;
+            }
+            return result;
+        }
+
         LocalDate end = endDate != null ? endDate : LocalDate.now();
         LocalDate start = startDate != null ? startDate : end.minusDays(6);
 

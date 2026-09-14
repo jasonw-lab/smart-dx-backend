@@ -53,7 +53,8 @@ public class DashboardController {
     @GetMapping("/sales-trend")
     public Result<List<Map<String, Object>>> getSalesTrend(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return Result.success(dashboardService.getSalesTrend(startDate, endDate));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false, defaultValue = "day") String interval) {
+        return Result.success(dashboardService.getSalesTrend(startDate, endDate, interval));
     }
 }
