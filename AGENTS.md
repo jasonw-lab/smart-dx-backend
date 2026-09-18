@@ -5,24 +5,38 @@
 > 全プロジェクト共通ルールは `~/ai-rules/*`（例: `~/ai-rules/ai-common.md`）を参照してください。本ファイルは `smart-dx-backend` 固有ルールを定義します。
 > ドキュメントは日本語が中心です。コメント・ドキュメント・レビュー記録も日本語で記述してください。
 
-## Git リモート運用方針（GitHub 復旧までの暫定措置）
+## Git リモート運用方針
 
-> [!IMPORTANT]
-> GitHub アカウント一時停止中のため、復旧まで **GitLab (`demolist`) を主リモートとして運用** します。
-> `origin` (GitHub) への Push は禁止し、必ず `gitlab` を使用してください。
+GitHub アカウント復旧に伴い、**GitHub (`origin`) を主リモートとして運用** します。
+GitLab (`gitlab`) はバックアップおよび GitLab 経由の運用（MR/CI 等）用として維持します。
 
-- **GitLab リポジトリ**: `git@gitlab.com:demolist/smart-dx-backend.git`
-- **Push 先**: デフォルトは `gitlab`（`git config remote.pushDefault gitlab` 設定済み）。
-- **CLI からの MR 直接発行（Web UI 操作不要）**:
-  フィーチャーブランチから `develop` への MR は Git Push Options を使って CLI から直接作成する:
-  ```bash
-  git push gitlab <ブランチ名> \
-    -o merge_request.create \
-    -o merge_request.target=develop \
-    -o merge_request.title="<MRタイトル>" \
-    -o merge_request.description="<MR詳細説明>"
-  ```
-- **承認・マージ**: 人間がレビュー・マージを実施する。
+### リモートリポジトリ構成
+
+- **GitHub (`origin` / 主リモート)**: `git@github.com:jasonw-lab/smart-dx-backend.git`
+- **GitLab (`gitlab` / 副リモート)**: `git@gitlab.com:demolist/smart-dx-backend.git`
+
+### 日常の Push & PR / MR ルール
+
+1. **Push 先**: デフォルトは `origin`（GitHub）。
+   ```bash
+   git push origin <ブランチ名>
+   ```
+2. **PR 作成（GitHub）**:
+   フィーチャーブランチから `develop` への PR を作成する。
+   GitHub CLI (`gh`) または Web UI を使用:
+   ```bash
+   gh pr create --base develop --title "<PRタイトル>" --body "<PR詳細説明>"
+   ```
+3. **GitLab への同期 / MR 発行（必要な場合）**:
+   フィーチャーブランチから `develop` への MR は Git Push Options を使って CLI から直接作成可能:
+   ```bash
+   git push gitlab <ブランチ名> \
+     -o merge_request.create \
+     -o merge_request.target=develop \
+     -o merge_request.title="<MRタイトル>" \
+     -o merge_request.description="<MR詳細説明>"
+   ```
+4. **承認・マージ**: 人間がレビュー・マージを実施する。
 
 ---
 
