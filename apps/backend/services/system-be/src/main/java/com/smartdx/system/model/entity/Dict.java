@@ -36,5 +36,6 @@ public class Dict {
     @TableLogic
     private Integer isDeleted;
 
+    @TableField(exist = false)
     private Long tenantId;
 }

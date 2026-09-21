@@ -33,4 +33,12 @@ public class DictPageVO {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
+
+    public String getDictCode() {
+        return code;
+    }
+
+    public void setDictCode(String dictCode) {
+        this.code = dictCode;
+    }
 }
