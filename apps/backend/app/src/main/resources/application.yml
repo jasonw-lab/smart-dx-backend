@@ -90,6 +90,8 @@ tenant:
     - sys_tenant_menu
     - sys_tenant_plan
     - sys_tenant_plan_menu
+    - sys_dict
+    - sys_dict_item
     - gen_table
     - gen_table_column
     # FIXME(指摘11): retail_sales_detail は tenant_id カラムを持つ業務テーブルだが
